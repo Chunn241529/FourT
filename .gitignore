@@ -22,7 +22,7 @@ run_admin.bat
 test_ui.py
 update_info.json
 core/config.py
-
+admin.py
 # Database files
 data/
 *.db
