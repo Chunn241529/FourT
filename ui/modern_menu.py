@@ -12,11 +12,13 @@ class ModernMenu(tk.Toplevel):
     CORNER_RADIUS = 12
     ITEM_HEIGHT = 44
     MENU_PADDING = 8
+    HEADER_HEIGHT = 28  # Height for header icons row
     
-    def __init__(self, parent, x, y, items, on_close=None, animate=True):
+    def __init__(self, parent, x, y, items, on_close=None, animate=True, on_bug_report=None):
         super().__init__(parent)
         self.items = items
         self.on_close_callback = on_close
+        self.on_bug_report = on_bug_report
         self.animate = animate
         self.item_widgets = []
         self.hovered_index = -1
@@ -48,6 +50,9 @@ class ModernMenu(tk.Toplevel):
         # Draw menu background
         self._draw_background()
         
+        # Draw header icons (bug report, etc.)
+        self._draw_header_icons()
+        
         # Build menu items
         self._build_menu()
         
@@ -69,7 +74,7 @@ class ModernMenu(tk.Toplevel):
     
     def _calculate_height(self) -> int:
         """Calculate total menu height based on items"""
-        height = self.MENU_PADDING * 2
+        height = self.MENU_PADDING * 2 + self.HEADER_HEIGHT  # Include header icons row
         for item in self.items:
             if item.get('type') == 'separator':
                 height += 9  # Separator height
@@ -110,9 +115,47 @@ class ModernMenu(tk.Toplevel):
             fill='', outline='#252540'
         )
     
+    def _draw_header_icons(self):
+        """Draw header icons row (bug report aligned right)"""
+        pad = 5
+        
+        # Bug report icon - positioned at top right
+        bug_x = self.menu_width + pad - 22
+        bug_y = pad + self.MENU_PADDING + 6
+        
+        # Bug icon with hover effect
+        self.canvas.create_text(
+            bug_x, bug_y,
+            text='🐞',
+            font=('Segoe UI Emoji', 12),
+            fill='#6c7086',  # Dim color by default
+            tags=('bug_icon', 'bug_clickable')
+        )
+        
+        # Bind hover and click events
+        self.canvas.tag_bind('bug_clickable', '<Enter>', self._on_bug_enter)
+        self.canvas.tag_bind('bug_clickable', '<Leave>', self._on_bug_leave)
+        self.canvas.tag_bind('bug_clickable', '<Button-1>', self._on_bug_click)
+    
+    def _on_bug_enter(self, event):
+        """Bug icon hover enter"""
+        self.canvas.itemconfig('bug_icon', fill='#f38ba8')  # Red-ish for bug
+        self.canvas.config(cursor='hand2')
+    
+    def _on_bug_leave(self, event):
+        """Bug icon hover leave"""
+        self.canvas.itemconfig('bug_icon', fill='#6c7086')
+        self.canvas.config(cursor='')
+    
+    def _on_bug_click(self, event):
+        """Bug icon click - trigger bug report"""
+        if self.on_bug_report:
+            self._do_destroy()
+            self.on_bug_report()
+    
     def _build_menu(self):
         """Create menu items as canvas elements"""
-        y_offset = self.MENU_PADDING + 5  # Start inside padding
+        y_offset = self.MENU_PADDING + 5 + self.HEADER_HEIGHT  # Start after header
         pad = 5
         widget_idx = 0  # Separate counter for actual menu items
         

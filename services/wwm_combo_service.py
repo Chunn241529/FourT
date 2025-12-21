@@ -329,6 +329,10 @@ class ComboPlayer:
         import time
         iterations = 0
         
+        # Initial delay to let trigger button "settle" and prevent it from
+        # being registered as the first action in the combo
+        time.sleep(0.05)
+        
         while self.running:
             if loop_count > 0 and iterations >= loop_count:
                 break

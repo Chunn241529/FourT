@@ -537,7 +537,7 @@ class WWMComboFrame(tk.Frame):
         tk.Label(controls, text="Combo Timeline:", font=FONTS['h2'], 
                 bg=colors['bg'], fg=colors['fg']).pack(side='left')
         
-        ModernButton(controls, text="🗑 Clear", command=self.clear_combo, 
+        ModernButton(controls, text="🗑", command=self.clear_combo, 
                    kind='secondary').pack(side='right', padx=5)
         
         # Tip
@@ -617,7 +617,7 @@ class WWMComboFrame(tk.Frame):
         tk.Label(header, text="🔥 Active Combos", font=FONTS['h2'],
                 bg=colors['header'], fg=colors['fg']).pack(side='left', padx=10, pady=8)
         
-        ModernButton(header, text="Clear", command=self.clear_active_combos, 
+        ModernButton(header, text="🗑", command=self.clear_active_combos, 
                    kind='secondary').pack(side='right', padx=5, pady=5)
         
         self.active_container = tk.Frame(activity_frame, bg=colors['sidebar'])
