@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download FourT Helper</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel=" preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css?v={{version}}">
@@ -25,23 +26,62 @@
             animation: slideUp 0.6s ease-out;
         }
 
+        /* New Compact Header */
         .page-header {
-            margin-bottom: 40px;
+            margin-bottom: 24px;
+            padding: 20px 28px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-decoration: none;
+        }
+
+        .header-left .hero-logo-container {
+            margin-bottom: 0;
+        }
+
+        .header-left .hero-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+        }
+
+        .header-left .lightning-effect {
+            width: 80px;
+            height: 80px;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .page-title {
-            font-size: 48px;
-            font-weight: 800;
+            font-size: 24px;
+            font-weight: 700;
             background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
+            margin: 0;
+            line-height: 1.2;
         }
 
         .page-subtitle {
-            font-size: 24px;
-            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0;
         }
 
         /* Repo Input Section */
@@ -76,7 +116,7 @@
         /* Total Downloads */
         .stats-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             margin-bottom: 24px;
             flex-wrap: wrap;
@@ -444,6 +484,14 @@
 </head>
 
 <body>
+    <!-- Language Toggle -->
+    <div class="lang-toggle-container">
+        <button id="langToggle" class="lang-toggle" title="Switch Language">
+            <span class="flag-en">🇺🇸</span>
+            <span class="flag-vi active">🇻🇳</span>
+        </button>
+    </div>
+
     <!-- Background Elements -->
     <div class="bg-wrapper">
         <div class="grid-overlay"></div>
@@ -455,24 +503,20 @@
     <div class="particles" id="particles"></div>
 
     <div class="download-container">
+        <!-- Compact Header with Logo, Title, and Stats -->
         <div class="page-header">
-            <a href="/" style="text-decoration: none;">
-                <h1 class="page-title">FourT Helper</h1>
+            <a href="/" class="header-left">
+                <div class="hero-logo-container">
+                    <div class="lightning-effect"></div>
+                    <img src="/favicon.ico" alt="FourT Logo" class="hero-logo">
+                </div>
+                <div class="header-info">
+                    <h1 class="page-title">FourT Helper</h1>
+                    <p class="page-subtitle" data-i18n="download_center">Download Center</p>
+                </div>
             </a>
-            <p class="page-subtitle">Downloads</p>
-        </div>
-
-        <!-- Repo Display -->
-        <div class="repo-section">
-            <span class="repo-label">Repo</span>
-            <span class="repo-name">Chunn241529/FourT</span>
-        </div>
-
-        <!-- Stats Header -->
-        <div class="stats-header">
-            <div></div>
             <div class="total-downloads">
-                <div class="total-downloads-label">Total downloads</div>
+                <div class="total-downloads-label" data-i18n="total_downloads">Total downloads</div>
                 <div class="total-downloads-value" id="totalDownloads">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                         stroke-width="2">
@@ -487,10 +531,10 @@
         <!-- Releases Table -->
         <div class="releases-table">
             <div class="table-header">
-                <div>Release name</div>
-                <div>Release date</div>
-                <div>Active days</div>
-                <div>Download count</div>
+                <div data-i18n="release_name">Release name</div>
+                <div data-i18n="release_date">Release date</div>
+                <div data-i18n="active_days">Active days</div>
+                <div data-i18n="download_count">Download count</div>
             </div>
             <div id="releasesContent">
                 <div class="empty-state">
@@ -504,6 +548,7 @@
         </div>
     </div>
 
+    <script src="/i18n.js"></script>
     <script src="/script_download.js?v={{version}}"></script>
 </body>
 

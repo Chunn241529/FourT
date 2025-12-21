@@ -62,7 +62,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             // Update total downloads
-            totalDownloadsEl.querySelector('span').textContent = (data.total_downloads || 0).toLocaleString();
+            const totalDownloads = data.total_downloads || 0;
+            let formattedTotal;
+            if (totalDownloads >= 1000000000) {
+                formattedTotal = (totalDownloads / 1000000000).toFixed(1) + 'B';
+            } else if (totalDownloads >= 1000000) {
+                formattedTotal = (totalDownloads / 1000000).toFixed(1) + 'M';
+            } else if (totalDownloads >= 1000) {
+                formattedTotal = (totalDownloads / 1000).toFixed(1) + 'K';
+            } else {
+                formattedTotal = totalDownloads.toLocaleString();
+            }
+            formattedTotal = formattedTotal.replace('.0', '');
+
+            totalDownloadsEl.querySelector('span').textContent = formattedTotal;
 
             const releases = data.releases || [];
 
