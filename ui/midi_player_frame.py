@@ -308,7 +308,7 @@ class MidiPlayerFrame(tk.Frame):
                      kind='secondary', width=4, font=('Segoe UI Emoji', 11)).pack(side='left', padx=2)
         ModernButton(actions, text="📂", command=self._load_playlist,
                      kind='secondary', width=4, font=('Segoe UI Emoji', 11)).pack(side='left', padx=2)
-        self.clear_btn = ModernButton(actions, text="🗑️", command=self._clear_playlist,
+        self.clear_btn = ModernButton(actions, text="🗑", command=self._clear_playlist,
                      kind='secondary', width=4, font=('Segoe UI Emoji', 11))
         self.clear_btn.pack(side='left', padx=2)
         self.stop_all_btn = ModernButton(actions, text="⏹", command=self._stop_all,

@@ -416,12 +416,17 @@ class MenuLauncher:
         if y + menu_height > screen_height - 10: y = screen_height - menu_height - 10
         
         # Create and show menu
-        self.active_menu = ModernMenu(self.root, x, y, menu_items, on_close=self.on_menu_close)
+        self.active_menu = ModernMenu(self.root, x, y, menu_items, on_close=self.on_menu_close, on_bug_report=self.open_bug_report)
 
     def on_menu_close(self):
         """Callback when menu is closed"""
         self.active_menu = None
         self.last_menu_close_time = time.time()
+    
+    def open_bug_report(self):
+        """Open bug report dialog"""
+        from .bug_report_dialog import show_bug_report_dialog
+        show_bug_report_dialog(self.root)
     
     def open_midi_player(self):
         """Open MIDI Auto Player window"""
@@ -620,7 +625,7 @@ class MenuLauncher:
             from .components import FramelessWindow
             icon_path = _get_icon_path()
             self.wwm_window = FramelessWindow(self.root, title="WWM Combo Studio", icon_path=icon_path)
-            self.wwm_window.geometry("1200x700")
+            self.wwm_window.geometry("1250x700")
             # FramelessWindow sets bg
             
             # Icon handled by FramelessWindow

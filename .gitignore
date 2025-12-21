@@ -23,6 +23,9 @@ test_ui.py
 update_info.json
 core/config.py
 admin.py
+web
+patch_main.py
+
 # Database files
 data/
 *.db

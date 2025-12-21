@@ -151,16 +151,66 @@ class WWMComboRuntime:
         """Play a combo"""
         items = combo_data['items']
         mode = combo_data['settings']['mode']
+        trigger_name = combo_data['settings'].get('trigger', '')
         loop_count = 0 if mode in ('loop', 'hold') else 1
+        
+        # Filter out items that match the trigger key
+        # User already pressed trigger, so we don't need to execute it again
+        filtered_items = self._filter_trigger_from_items(items, trigger_name)
         
         if self.on_status_change:
             self.on_status_change(f"Playing: {combo_data['name']}")
         
         self.player.play(
-            items, 
+            filtered_items, 
             on_finish=lambda: self._on_playback_finished(), 
             loop_count=loop_count
         )
+    
+    def _filter_trigger_from_items(self, items: list, trigger_name: str) -> list:
+        """Remove items from the beginning that match the trigger key.
+        
+        This prevents the trigger from being executed again as the first action
+        since the user already pressed it to activate the combo.
+        """
+        if not items or not trigger_name:
+            return items
+        
+        # Normalize trigger name for comparison
+        trigger_lower = trigger_name.lower()
+        
+        # Map trigger names to skill key equivalents
+        trigger_key_map = {
+            'button.x1': ['x1', 'mouse4', 'back'],
+            'button.x2': ['x2', 'mouse5', 'forward'],
+            'button.left': ['lmb', 'left_click', 'mouse1'],
+            'button.right': ['rmb', 'right_click', 'mouse2'],
+            'button.middle': ['mmb', 'middle_click', 'mouse3'],
+        }
+        
+        # Get equivalent keys for this trigger
+        trigger_keys = trigger_key_map.get(trigger_lower, [trigger_lower])
+        
+        # Also add the trigger name itself (for keyboard keys like 'j', 'k', etc.)
+        if not trigger_lower.startswith('button.'):
+            trigger_keys.append(trigger_lower)
+        
+        # Filter: skip items at the START that match trigger
+        filtered = []
+        skip_trigger_items = True  # Only skip at the beginning
+        
+        for item in items:
+            if item['type'] == 'skill' and skip_trigger_items:
+                item_key = item.get('key', '').lower()
+                if item_key in trigger_keys:
+                    # Skip this item - it matches the trigger
+                    continue
+            
+            # Stop skipping after first non-matching item
+            skip_trigger_items = False
+            filtered.append(item)
+        
+        return filtered
     
     def _on_playback_finished(self):
         """Callback when playback finishes"""
