@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // GitHub Repo - hardcoded
+    // GitHub Repo - for release info only
     const GITHUB_REPO = 'Chunn241529/FourT';
+    // API base URL for our stats
+    const API_BASE = window.location.origin;
 
     // Generate particles
     const particlesContainer = document.getElementById('particles');
@@ -45,8 +47,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const releasesContent = document.getElementById('releasesContent');
     const totalDownloadsEl = document.getElementById('totalDownloads');
 
-    // Auto-fetch on load
-    fetchReleases();
+    // Store our download stats
+    let downloadStats = { total_downloads: 0, assets: {} };
+    // Store releases for re-rendering
+    let cachedReleases = [];
+
+    // Auto-fetch on load - stats first, then releases
+    init();
+
+    async function init() {
+        await fetchDownloadStats();
+        await fetchReleases();
+    }
+
+    // Fetch our download stats from backend
+    async function fetchDownloadStats() {
+        try {
+            const response = await fetch(`${API_BASE}/api/stats/downloads`);
+            if (response.ok) {
+                downloadStats = await response.json();
+                updateTotalDownloadsDisplay();
+                // Re-render releases if already loaded
+                if (cachedReleases.length > 0) {
+                    renderReleases(cachedReleases);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch download stats:', error);
+        }
+    }
+
+    // Update total downloads display
+    function updateTotalDownloadsDisplay() {
+        totalDownloadsEl.querySelector('span').textContent = downloadStats.total_downloads.toLocaleString();
+    }
 
     // Fetch releases from GitHub API
     async function fetchReleases() {
@@ -66,6 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Cache releases for re-rendering when stats update
+            cachedReleases = releases;
             renderReleases(releases);
         } catch (error) {
             showError(error.message);
@@ -74,18 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render releases table
     function renderReleases(releases) {
-        let totalDownloads = 0;
         const now = new Date();
-
-        // Calculate total downloads
-        releases.forEach(release => {
-            release.assets.forEach(asset => {
-                totalDownloads += asset.download_count;
-            });
-        });
-
-        // Update total downloads display
-        totalDownloadsEl.querySelector('span').textContent = totalDownloads.toLocaleString();
 
         // Build HTML
         let html = '';
@@ -95,10 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const activeDays = Math.floor((now - releaseDate) / (1000 * 60 * 60 * 24));
             const formattedDate = releaseDate.toISOString().split('T')[0];
 
-            // Calculate release download count
+            // Get download count from our stats
             let releaseDownloads = 0;
             release.assets.forEach(asset => {
-                releaseDownloads += asset.download_count;
+                releaseDownloads += (downloadStats.assets[asset.name]?.count || 0);
             });
 
             // Determine badge
@@ -122,10 +147,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="release-date">${formattedDate}</div>
                     <div class="active-days">${activeDays.toFixed(1)}</div>
-                    <div class="download-count">${releaseDownloads.toLocaleString()}</div>
+                    <div class="download-count" data-release="${index}">${releaseDownloads.toLocaleString()}</div>
                 </div>
                 <div class="assets-container" data-index="${index}">
-                    ${renderAssets(release.assets)}
+                    ${renderAssets(release.assets, index)}
                 </div>
             `;
         });
@@ -141,13 +166,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Render assets for a release
-    function renderAssets(assets) {
+    function renderAssets(assets, releaseIndex) {
         if (assets.length === 0) {
             return '<div class="asset-item"><span style="color: rgba(255,255,255,0.4);">No downloadable assets</span></div>';
         }
 
         return assets.map(asset => {
             const sizeInMB = (asset.size / (1024 * 1024)).toFixed(2);
+            const assetCount = downloadStats.assets[asset.name]?.count || 0;
             return `
                 <div class="asset-item">
                     <div class="asset-info">
@@ -162,8 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                     <div class="asset-downloads">
-                        <span class="asset-download-count">${asset.download_count.toLocaleString()} downloads</span>
-                        <a href="${asset.browser_download_url}" class="asset-download-btn" target="_blank">
+                        <span class="asset-download-count" data-asset="${asset.name}">${assetCount.toLocaleString()} downloads</span>
+                        <a href="${asset.browser_download_url}" class="asset-download-btn" target="_blank" data-asset="${asset.name}" data-release="${releaseIndex}" onclick="incrementDownload(event, this)">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
@@ -174,6 +200,40 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
     }
+
+    // Increment download count when clicked
+    window.incrementDownload = async function (event, btn) {
+        const assetName = btn.getAttribute('data-asset');
+        const releaseIndex = btn.getAttribute('data-release');
+
+        // Optimistic update - update UI immediately
+        const countEl = document.querySelector(`.asset-download-count[data-asset="${assetName}"]`);
+        if (countEl) {
+            const currentCount = parseInt(countEl.textContent.replace(/[^0-9]/g, '')) || 0;
+            countEl.textContent = (currentCount + 1).toLocaleString() + ' downloads';
+        }
+
+        // Update release total
+        const releaseCountEl = document.querySelector(`.download-count[data-release="${releaseIndex}"]`);
+        if (releaseCountEl) {
+            const currentCount = parseInt(releaseCountEl.textContent.replace(/[^0-9]/g, '')) || 0;
+            releaseCountEl.textContent = (currentCount + 1).toLocaleString();
+        }
+
+        // Update total downloads
+        const totalSpan = totalDownloadsEl.querySelector('span');
+        const totalCount = parseInt(totalSpan.textContent.replace(/[^0-9]/g, '')) || 0;
+        totalSpan.textContent = (totalCount + 1).toLocaleString();
+
+        // Call API to persist the count
+        try {
+            await fetch(`${API_BASE}/api/stats/downloads/increment?asset_name=${encodeURIComponent(assetName)}`, {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.error('Failed to increment download count:', error);
+        }
+    };
 
     // Show loading state
     function showLoading() {

@@ -210,8 +210,9 @@
         /* Assets Dropdown */
         .assets-container {
             display: none;
-            padding: 0 24px 16px 52px;
+            padding: 16px 24px 16px 52px;
             background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .release-row.expanded+.assets-container {
@@ -455,7 +456,9 @@
 
     <div class="download-container">
         <div class="page-header">
-            <h1 class="page-title">FourT Helper</h1>
+            <a href="/" style="text-decoration: none;">
+                <h1 class="page-title">FourT Helper</h1>
+            </a>
             <p class="page-subtitle">Downloads</p>
         </div>
 
@@ -497,11 +500,11 @@
         </div>
 
         <div class="page-footer">
-            Made with ❤️ by <a href="https://github.com/Chunn241529/helper" target="_blank">FourT Studio</a>
+            Made with ❤️ by <a href="https://github.com/Chunn241529/FourT" target="_blank">FourT Studio</a>
         </div>
     </div>
 
-    <script src="/script_download.js"></script>
+    <script src="/script_download.js?v={{version}}"></script>
 </body>
 
 </html>
