@@ -116,8 +116,29 @@ class ModernMenu(tk.Toplevel):
         )
     
     def _draw_header_icons(self):
-        """Draw header icons row (bug report aligned right)"""
+        """Draw header icons row with logo left, bug report right"""
         pad = 5
+        
+        # Logo/branding icon - positioned at top left
+        logo_x = pad + 18
+        logo_y = pad + self.MENU_PADDING + 6
+        
+        self.canvas.create_text(
+            logo_x, logo_y,
+            text='⚔',
+            font=('Segoe UI Emoji', 11),
+            fill=colors['accent'],
+            tags='logo_icon'
+        )
+        
+        self.canvas.create_text(
+            logo_x + 16, logo_y,
+            text='FourT',
+            font=('Segoe UI', 9, 'bold'),
+            fill=colors['text_dim'],
+            anchor='w',
+            tags='logo_text'
+        )
         
         # Bug report icon - positioned at top right
         bug_x = self.menu_width + pad - 22

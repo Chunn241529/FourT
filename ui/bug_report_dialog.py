@@ -396,21 +396,13 @@ class BugReportDialog:
         self.dialog.after(0, open_email)
     
     def _on_submit_success(self, via_email=False):
-        """Handle successful submission"""
+        """Handle successful submission - show thank you popup"""
         def update():
-            if via_email:
-                self.status_label.config(
-                    text="✓ Đã mở email client. Vui lòng gửi email.",
-                    fg=colors['success']
-                )
-            else:
-                self.status_label.config(
-                    text="✓ Đã gửi báo cáo thành công! Cảm ơn bạn.",
-                    fg=colors['success']
-                )
+            # Close the bug report dialog
+            self._close()
             
-            # Close after delay
-            self.dialog.after(2000, self._close)
+            # Show beautiful thank you popup
+            ThankYouPopup(self.parent, via_email=via_email)
         
         self.dialog.after(0, update)
     
@@ -430,6 +422,135 @@ class BugReportDialog:
         """Close the dialog"""
         try:
             self.dialog.destroy()
+        except:
+            pass
+
+
+class ThankYouPopup:
+    """Beautiful thank you popup with custom title bar and animations"""
+    
+    def __init__(self, parent, via_email=False):
+        self.parent = parent
+        self.via_email = via_email
+        self._animation_step = 0
+        
+        # Create popup window
+        self.popup = FramelessWindow(
+            parent,
+            title="Cảm ơn bạn!",
+            icon_path=None
+        )
+        self.popup.geometry("400x320")
+        self.popup.attributes('-topmost', True)
+        
+        self._setup_ui()
+        self._start_animation()
+        
+        # Auto close after 5 seconds
+        self.popup.after(5000, self._close)
+    
+    def _setup_ui(self):
+        """Build the thank you popup UI"""
+        content = self.popup.content_frame
+        content.configure(bg=colors['bg'])
+        
+        # Main container
+        container = tk.Frame(content, bg=colors['bg'])
+        container.pack(fill='both', expand=True, padx=25, pady=20)
+        
+        # === Animated heart/check icon ===
+        self.icon_label = tk.Label(
+            container,
+            text="💚",
+            font=('Segoe UI Emoji', 48),
+            bg=colors['bg'],
+            fg=colors['success']
+        )
+        self.icon_label.pack(pady=(10, 15))
+        
+        # === Main title ===
+        tk.Label(
+            container,
+            text="Cảm ơn bạn!",
+            font=('Segoe UI', 20, 'bold'),
+            bg=colors['bg'],
+            fg=colors['fg']
+        ).pack(pady=(0, 8))
+        
+        # === Subtitle with gradient-like effect ===
+        if self.via_email:
+            message = "Đã mở ứng dụng email.\nVui lòng gửi email để hoàn tất báo cáo."
+        else:
+            message = "Báo cáo lỗi của bạn đã được gửi thành công.\nChúng tôi sẽ xem xét và phản hồi sớm nhất!"
+        
+        tk.Label(
+            container,
+            text=message,
+            font=FONTS['body'],
+            bg=colors['bg'],
+            fg=colors['text_dim'],
+            justify='center'
+        ).pack(pady=(0, 20))
+        
+        # === Decorative separator ===
+        separator = tk.Frame(container, bg=colors['accent'], height=2)
+        separator.pack(fill='x', padx=40, pady=(0, 15))
+        
+        # === Sparkle decoration ===
+        sparkle_frame = tk.Frame(container, bg=colors['bg'])
+        sparkle_frame.pack()
+        
+        self.sparkles = []
+        sparkle_chars = ['✨', '⭐', '✨']
+        for char in sparkle_chars:
+            lbl = tk.Label(
+                sparkle_frame,
+                text=char,
+                font=('Segoe UI Emoji', 16),
+                bg=colors['bg'],
+                fg=colors['accent']
+            )
+            lbl.pack(side='left', padx=8)
+            self.sparkles.append(lbl)
+        
+        # === Close button ===
+        close_btn = ModernButton(
+            container,
+            text="Đóng",
+            command=self._close,
+            kind='secondary'
+        )
+        close_btn.pack(pady=(20, 0), ipadx=30, ipady=6)
+    
+    def _start_animation(self):
+        """Start subtle animation effects"""
+        self._animate_icons()
+    
+    def _animate_icons(self):
+        """Animate the icons with a pulsing effect"""
+        try:
+            # Cycle through icons
+            icons = ['💚', '💖', '✅', '🎉', '💚']
+            self._animation_step = (self._animation_step + 1) % len(icons)
+            self.icon_label.config(text=icons[self._animation_step])
+            
+            # Animate sparkles
+            for i, sparkle in enumerate(self.sparkles):
+                if (self._animation_step + i) % 2 == 0:
+                    sparkle.config(fg=colors['accent'])
+                else:
+                    sparkle.config(fg=colors['success'])
+            
+            # Continue animation
+            if self._animation_step < 4:
+                self.popup.after(600, self._animate_icons)
+        except tk.TclError:
+            pass  # Window destroyed
+    
+    def _close(self):
+        """Close the popup"""
+        try:
+            self.popup.destroy()
         except:
             pass
 
