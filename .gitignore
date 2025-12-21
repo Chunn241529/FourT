@@ -47,10 +47,10 @@ dist/
 *.onefile-build/
 nuitka-crash-report.xml
 
-# # Build scripts
-# build_*.ps1
-# installer.iss
-# git.sh
+# Build scripts
+build_*.ps1
+installer.iss
+git.sh
 
 
 # Executables

@@ -119,6 +119,7 @@ $nuitkaArgs = @(
     "--include-module=services.connection_manager",
     "--include-module=services.secure_license_cache",
     "--include-module=services.license_key_utils",
+    "--include-module=device_utils",
     "--include-module=services.offline_payment_service",
     # Quest Video Helper services
     "--include-module=services.ocr_addon_manager",
