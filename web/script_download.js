@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // GitHub Repo - for release info only
-    const GITHUB_REPO = 'Chunn241529/FourT';
-    // API base URL for our stats
+    // API base URL
     const API_BASE = window.location.origin;
 
     // Generate particles
@@ -47,61 +45,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const releasesContent = document.getElementById('releasesContent');
     const totalDownloadsEl = document.getElementById('totalDownloads');
 
-    // Store our download stats
-    let downloadStats = { total_downloads: 0, assets: {} };
-    // Store releases for re-rendering
-    let cachedReleases = [];
+    // Fetch releases on load
+    fetchReleases();
 
-    // Auto-fetch on load - stats first, then releases
-    init();
-
-    async function init() {
-        await fetchDownloadStats();
-        await fetchReleases();
-    }
-
-    // Fetch our download stats from backend
-    async function fetchDownloadStats() {
-        try {
-            const response = await fetch(`${API_BASE}/api/stats/downloads`);
-            if (response.ok) {
-                downloadStats = await response.json();
-                updateTotalDownloadsDisplay();
-                // Re-render releases if already loaded
-                if (cachedReleases.length > 0) {
-                    renderReleases(cachedReleases);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch download stats:', error);
-        }
-    }
-
-    // Update total downloads display
-    function updateTotalDownloadsDisplay() {
-        totalDownloadsEl.querySelector('span').textContent = downloadStats.total_downloads.toLocaleString();
-    }
-
-    // Fetch releases from GitHub API
+    // Fetch releases from our own API
     async function fetchReleases() {
         showLoading();
 
         try {
-            const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases`);
+            const response = await fetch(`${API_BASE}/api/releases`);
 
             if (!response.ok) {
                 throw new Error(`Failed to fetch releases (${response.status})`);
             }
 
-            const releases = await response.json();
+            const data = await response.json();
+
+            // Update total downloads
+            totalDownloadsEl.querySelector('span').textContent = (data.total_downloads || 0).toLocaleString();
+
+            const releases = data.releases || [];
 
             if (releases.length === 0) {
-                showEmpty('No releases found for this repository.');
+                showEmpty('No releases found.');
                 return;
             }
 
-            // Cache releases for re-rendering when stats update
-            cachedReleases = releases;
             renderReleases(releases);
         } catch (error) {
             showError(error.message);
@@ -120,10 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const activeDays = Math.floor((now - releaseDate) / (1000 * 60 * 60 * 24));
             const formattedDate = releaseDate.toISOString().split('T')[0];
 
-            // Get download count from our stats
+            // Calculate release download count
             let releaseDownloads = 0;
-            release.assets.forEach(asset => {
-                releaseDownloads += (downloadStats.assets[asset.name]?.count || 0);
+            (release.assets || []).forEach(asset => {
+                releaseDownloads += (asset.download_count || 0);
             });
 
             // Determine badge
@@ -142,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                             </svg>
                         </span>
-                        <span class="release-version">FourT v${release.tag_name}</span>
+                        <span class="release-version">${release.name || 'FourT v' + release.tag_name}</span>
                         ${badge}
                     </div>
                     <div class="release-date">${formattedDate}</div>
@@ -150,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="download-count" data-release="${index}">${releaseDownloads.toLocaleString()}</div>
                 </div>
                 <div class="assets-container" data-index="${index}">
-                    ${renderAssets(release.assets, index)}
+                    ${renderAssets(release.assets || [], release.tag_name, index)}
                 </div>
             `;
         });
@@ -166,14 +135,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Render assets for a release
-    function renderAssets(assets, releaseIndex) {
+    function renderAssets(assets, version, releaseIndex) {
         if (assets.length === 0) {
             return '<div class="asset-item"><span style="color: rgba(255,255,255,0.4);">No downloadable assets</span></div>';
         }
 
         return assets.map(asset => {
-            const sizeInMB = (asset.size / (1024 * 1024)).toFixed(2);
-            const assetCount = downloadStats.assets[asset.name]?.count || 0;
+            const sizeInMB = ((asset.size || 0) / (1024 * 1024)).toFixed(2);
+            const downloadUrl = asset.download_url || `/download/installer/file`;
             return `
                 <div class="asset-item">
                     <div class="asset-info">
@@ -188,8 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                     <div class="asset-downloads">
-                        <span class="asset-download-count" data-asset="${asset.name}">${assetCount.toLocaleString()} downloads</span>
-                        <a href="${asset.browser_download_url}" class="asset-download-btn" target="_blank" data-asset="${asset.name}" data-release="${releaseIndex}" onclick="incrementDownload(event, this)">
+                        <span class="asset-download-count" data-asset="${asset.name}">${(asset.download_count || 0).toLocaleString()} downloads</span>
+                        <a href="${downloadUrl}" class="asset-download-btn" data-asset="${asset.name}" data-version="${version}" data-release="${releaseIndex}" onclick="incrementDownload(event, this)">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
@@ -202,8 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Increment download count when clicked
-    window.incrementDownload = async function (event, btn) {
+    window.incrementDownload = function (event, btn) {
         const assetName = btn.getAttribute('data-asset');
+        const version = btn.getAttribute('data-version');
         const releaseIndex = btn.getAttribute('data-release');
 
         // Optimistic update - update UI immediately
@@ -225,14 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalCount = parseInt(totalSpan.textContent.replace(/[^0-9]/g, '')) || 0;
         totalSpan.textContent = (totalCount + 1).toLocaleString();
 
-        // Call API to persist the count
-        try {
-            await fetch(`${API_BASE}/api/stats/downloads/increment?asset_name=${encodeURIComponent(assetName)}`, {
-                method: 'POST'
-            });
-        } catch (error) {
-            console.error('Failed to increment download count:', error);
-        }
+        // Call API to persist the count - REMOVED to avoid double counting
+        // Backend now handles increment on download request
+        // fetch(`${API_BASE}/api/releases/increment?version=${encodeURIComponent(version)}&asset_name=${encodeURIComponent(assetName)}`, {
+        //     method: 'POST',
+        //     keepalive: true
+        // }).catch(err => console.error('Failed to increment:', err));
     };
 
     // Show loading state
