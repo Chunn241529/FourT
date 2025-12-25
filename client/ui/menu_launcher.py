@@ -335,44 +335,44 @@ class MenuLauncher:
             )
 
         # Screen Translator (PLUS+)
-        if self.feature_manager.has_feature(Features.SCREEN_TRANSLATOR):
-            menu_items.append(
-                {
-                    "label": t("screen_translator"),
-                    "command": self.open_screen_translator,
-                    "icon": "🌐",
-                    "fg": "#94e2d5",
-                }
-            )
-        else:
-            menu_items.append(
-                {
-                    "label": t("screen_translator_plus"),
-                    "command": self.show_screen_translator_restriction,
-                    "icon": "🔒",
-                    "fg": "#6c7086",
-                }
-            )
+        # if self.feature_manager.has_feature(Features.SCREEN_TRANSLATOR):
+        #     menu_items.append(
+        #         {
+        #             "label": t("screen_translator"),
+        #             "command": self.open_screen_translator,
+        #             "icon": "🌐",
+        #             "fg": "#94e2d5",
+        #         }
+        #     )
+        # else:
+        #     menu_items.append(
+        #         {
+        #             "label": t("screen_translator_plus"),
+        #             "command": self.show_screen_translator_restriction,
+        #             "icon": "🔒",
+        #             "fg": "#6c7086",
+        #         }
+        #     )
 
-        # Ping Optimizer (Feature-gated)
-        if self.feature_manager.has_feature(Features.PING_OPTIMIZER):
-            menu_items.append(
-                {
-                    "label": t("ping_optimizer"),
-                    "command": self.open_ping_optimizer,
-                    "icon": "⚡",
-                    "fg": "#cba6f7",
-                }
-            )
-        else:
-            menu_items.append(
-                {
-                    "label": t("ping_optimizer_pro"),
-                    "command": self.show_ping_optimizer_restriction,
-                    "icon": "🔒",
-                    "fg": "#6c7086",
-                }
-            )
+        # # Ping Optimizer (Feature-gated)
+        # if self.feature_manager.has_feature(Features.PING_OPTIMIZER):
+        #     menu_items.append(
+        #         {
+        #             "label": t("ping_optimizer"),
+        #             "command": self.open_ping_optimizer,
+        #             "icon": "⚡",
+        #             "fg": "#cba6f7",
+        #         }
+        #     )
+        # else:
+        #     menu_items.append(
+        #         {
+        #             "label": t("ping_optimizer_pro"),
+        #             "command": self.show_ping_optimizer_restriction,
+        #             "icon": "🔒",
+        #             "fg": "#6c7086",
+        #         }
+        #     )
 
         # Macro Recorder
         if has_macro:
