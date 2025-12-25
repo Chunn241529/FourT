@@ -7,32 +7,33 @@
 # ==================================
 
 # Environment variables (API keys, secrets, bank info)
-# .env
-# .env.*
-# !.env.example
-
-# Server configuration (contains runtime secrets)
-server_config.json
-backend/
-cloudflare/
-bore/
-ngrok/
-run_server.py
-run_admin.bat
-test_ui.py
-update_info.json
-core/config.py
-admin.py
-patch_main.py
-
-# Database files
-data/
-*.db
-*.sqlite
-*.sqlite3
 .env
-wwm_combos
-wwm_resources
+.env.*
+!.env.example
+
+# Server sensitive files
+server/.env
+server/server_config.json
+server/data/*.db
+server/data/*.sqlite
+server/cloudflare/
+server/bore/
+server/backend/
+server/
+
+
+# Root level sensitive files
+patch_main.py
+test_ui.py
+test.py
+git.sh
+mbbank_qr.png
+nuitka-crash-report.xml
+
+# Client user data (optional - may want to commit defaults)
+client/data/fourthelper.db
+client/data/wwm_user_settings.json
+
 # ==================================
 # BUILD ARTIFACTS
 # ==================================
@@ -47,10 +48,7 @@ dist/
 *.onefile-build/
 nuitka-crash-report.xml
 
-# Build scripts
-build_*.ps1
-installer.iss
-git.sh
+
 
 
 # Executables
@@ -75,6 +73,10 @@ macros/
 
 # User MIDI files
 midi_files/
+
+#Release
+client/releases
+client/data
 
 # ==================================
 # PYTHON ARTIFACTS

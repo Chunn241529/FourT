@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO Meta Tags -->
+    <title>Tải MIDI Piano Player & Keybind Manager | FourT Helper Download</title>
+    <meta name="description"
+        content="Tải FourT Helper miễn phí - Phần mềm chơi nhạc MIDI và quản lý phím tắt cho game. Phiên bản mới nhất, an toàn cho Windows.">
+    <meta name="keywords"
+        content="tải midi player, download keybind manager, tải FourT Helper, game tools download, phím tắt game">
+    <meta name="author" content="FourT Studio">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://fourt.io.vn/download">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fourt.io.vn/download">
+    <meta property="og:title" content="Tải MIDI Piano Player & Keybind Manager | FourT Helper">
+    <meta property="og:description"
+        content="Tải FourT Helper miễn phí - Phần mềm hỗ trợ chơi game. An toàn cho Windows.">
+    <meta property="og:image" content="https://fourt.io.vn/og-image.png">
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:site_name" content="FourT Helper">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://fourt.io.vn/download">
+    <meta name="twitter:title" content="Tải MIDI Piano Player & Keybind Manager">
+    <meta name="twitter:description" content="Download FourT Helper miễn phí - Công cụ hỗ trợ chơi game.">
+    <meta name="twitter:image" content="https://fourt.io.vn/og-image.png">
+
+    <!-- Alternate Languages -->
+    <link rel="alternate" hreflang="vi" href="https://fourt.io.vn/download">
+    <link rel="alternate" hreflang="en" href="https://fourt.io.vn/download?lang=en">
+    <link rel="alternate" hreflang="x-default" href="https://fourt.io.vn/download">
+
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/style.css?v={{version}}">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "FourT Helper - MIDI Piano Player & Keybind Manager",
+        "description": "Phần mềm chơi nhạc MIDI và quản lý phím tắt cho game. Tải miễn phí, an toàn.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Windows",
+        "downloadUrl": "https://fourt.io.vn/download",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "VND"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "FourT Studio",
+            "url": "https://fourt.io.vn"
+        }
+    }
+    </script>
+    <style>
+        /* Download page body layout */
+        body {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 40px 20px;
+        }
+
+        .download-container {
+            max-width: 1000px;
+            width: 100%;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        /* New Compact Header */
+        .page-header {
+            margin-bottom: 24px;
+            padding: 20px 28px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-decoration: none;
+        }
+
+        .header-left .hero-logo-container {
+            margin-bottom: 0;
+        }
+
+        .header-left .hero-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+        }
+
+        .header-left .lightning-effect {
+            width: 80px;
+            height: 80px;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0;
+        }
+
+        /* Repo Input Section */
+        .repo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .repo-label {
+            background: rgba(124, 58, 237, 0.2);
+            border: 1px solid rgba(124, 58, 237, 0.4);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #c4b5fd;
+            font-size: 14px;
+        }
+
+        .repo-name {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        /* Total Downloads */
+        .stats-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .total-downloads {
+            text-align: right;
+        }
+
+        .total-downloads-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 4px;
+        }
+
+        .total-downloads-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #22c55e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .total-downloads-value svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Releases Table */
+        .releases-table {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            padding: 16px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .release-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            align-items: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .release-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .release-row:last-child {
+            border-bottom: none;
+        }
+
+        .release-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .expand-icon {
+            color: rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .expand-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .release-row.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .release-version {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .release-badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-latest {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: #22c55e;
+        }
+
+        .badge-prerelease {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: #fbbf24;
+        }
+
+        .release-date {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .active-days {
+            color: #fbbf24;
+            font-weight: 500;
+        }
+
+        .download-count {
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        /* Assets Dropdown */
+        .assets-container {
+            display: none;
+            padding: 16px 24px 16px 52px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .release-row.expanded+.assets-container {
+            display: block;
+        }
+
+        .asset-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .asset-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+
+        .asset-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .asset-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .asset-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(124, 58, 237, 0.2);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #a78bfa;
+        }
+
+        .asset-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .asset-name {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .asset-size {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .asset-downloads {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .asset-download-count {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .asset-download-btn {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .asset-download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
+        }
+
+        .asset-download-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Loading State */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(124, 58, 237, 0.2);
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Error State */
+        .error-container {
+            padding: 40px 20px;
+            text-align: center;
+            color: #ef4444;
+        }
+
+        .error-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .page-footer a {
+            color: #a78bfa;
+            text-decoration: none;
+        }
+
+        .page-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 32px;
+            }
+
+            .page-subtitle {
+                font-size: 18px;
+            }
+
+            .repo-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .repo-label {
+                text-align: center;
+            }
+
+            .table-header,
+            .release-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .table-header>*:not(:first-child) {
+                display: none;
+            }
+
+            .release-row>*:not(.release-name) {
+                padding-left: 28px;
+                font-size: 13px;
+            }
+
+            .release-row>*:not(.release-name)::before {
+                font-size: 11px;
+                color: rgba(255, 255, 255, 0.4);
+                margin-right: 8px;
+            }
+
+            .release-date::before {
+                content: "Date: ";
+            }
+
+            .active-days::before {
+                content: "Active: ";
+            }
+
+            .download-count::before {
+                content: "Downloads: ";
+            }
+
+            .assets-container {
+                padding-left: 24px;
+            }
+
+            .asset-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .asset-downloads {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Language Toggle -->
+    <div class="lang-toggle-container">
+        <button id="langToggle" class="lang-toggle" title="Switch Language">
+            <span class="flag-en">🇺🇸</span>
+            <span class="flag-vi active">🇻🇳</span>
+        </button>
+    </div>
+
+    <!-- Background Elements -->
+    <div class="bg-wrapper">
+        <div class="grid-overlay"></div>
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <div class="particles" id="particles"></div>
+
+    <div class="download-container">
+        <!-- Compact Header with Logo, Title, and Stats -->
+        <div class="page-header">
+            <a href="/" class="header-left">
+                <div class="hero-logo-container">
+                    <div class="lightning-effect"></div>
+                    <img src="/favicon.ico" alt="FourT Logo" class="hero-logo">
+                </div>
+                <div class="header-info">
+                    <h1 class="page-title">FourT Helper</h1>
+                    <p class="page-subtitle" data-i18n="download_center">Download Center</p>
+                </div>
+            </a>
+            <div class="total-downloads">
+                <div class="total-downloads-label" data-i18n="total_downloads">Total downloads</div>
+                <div class="total-downloads-value" id="totalDownloads">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Releases Table -->
+        <div class="releases-table">
+            <div class="table-header">
+                <div data-i18n="release_name">Release name</div>
+                <div data-i18n="release_date">Release date</div>
+                <div data-i18n="active_days">Active days</div>
+                <div data-i18n="download_count">Download count</div>
+            </div>
+            <div id="releasesContent">
+                <div class="empty-state">
+                    Enter a GitHub repository and click "Fetch Releases" to view releases.
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            Made with ❤️ by <a href="https://github.com/Chunn241529/FourT" target="_blank">FourT Studio</a>
+        </div>
+    </div>
+
+    <script src="/i18n.js"></script>
+    <script src="/script_download.js?v={{version}}"></script>
+</body>
+
+</html>
