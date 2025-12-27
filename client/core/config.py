@@ -39,6 +39,7 @@ COLOR_TEXT_DIM = "#7f8c8d"
 # ------------------- Donate Link -------------------
 DONATE_URL = "https://drive.google.com/file/d/1BcrA_KVpOu0MTuL_xa1JPOj_9bDkCZmb/view?usp=drive_link"
 
+
 # ------------------- Playback Configuration -------------------
 DEFAULT_PLAYBACK_SPEED = 1.0
 MIN_PLAYBACK_SPEED = 0.25
@@ -344,6 +345,13 @@ LICENSE_ENDPOINTS = get_license_endpoints()
 # ------------------- Auto-Update Configuration (Dependent on LICENSE_SERVER_URL) -------------------
 # Use the backend endpoint for updates
 UPDATE_SERVER_URL = f"{LICENSE_SERVER_URL}/update/info"
+
+
+# ------------------- Community -------------------
+def get_community_url() -> str:
+    """Get the MIDI Community URL based on current server"""
+    return f"{get_license_server_url()}/community"
+
 
 # SECURITY: Demo key is now server-side only (via environment variable)
 # Client should never have access to this key

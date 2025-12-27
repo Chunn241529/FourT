@@ -121,6 +121,7 @@ _translations: Dict[str, Dict[str, str]] = {
         "confirm": "Xác nhận",
         "delete_all": "Xóa tất cả?",
         "playlist_empty_info": "Playlist trống!",
+        "opening_community": "🌐 Đang mở Community...",
         # Ping Optimizer
         "excellent": "Xuất sắc",
         "good": "Tốt",
@@ -374,6 +375,7 @@ _translations: Dict[str, Dict[str, str]] = {
         "confirm": "Confirm",
         "delete_all": "Delete all?",
         "playlist_empty_info": "Playlist is empty!",
+        "opening_community": "🌐 Opening Community...",
         # Ping Optimizer
         "excellent": "Excellent",
         "good": "Good",

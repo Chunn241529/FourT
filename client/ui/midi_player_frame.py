@@ -474,6 +474,18 @@ class MidiPlayerFrame(tk.Frame):
             font=("Segoe UI Emoji", 11),
         )
         self.clear_btn.pack(side="left", padx=2)
+
+        # Community button - open MIDI sharing community
+        self.community_btn = ModernButton(
+            actions,
+            text="🌐",
+            command=self._open_community,
+            kind="secondary",
+            width=4,
+            font=("Segoe UI Emoji", 11),
+        )
+        self.community_btn.pack(side="left", padx=2)
+
         self.stop_all_btn = ModernButton(
             actions,
             text="⏹",
@@ -576,6 +588,19 @@ class MidiPlayerFrame(tk.Frame):
         self.play_btn.set_text("▶")
         self.status_label.config(text=t("stopped_all"), fg=colors["warning"])
         self._refresh_list()
+
+    def _open_community(self):
+        """Open the MIDI community page in browser"""
+        import webbrowser
+        from core.config import get_community_url
+
+        try:
+            url = get_community_url()
+            webbrowser.open(url)
+            self.status_label.config(text=t("opening_community"), fg=colors["accent"])
+        except Exception as e:
+            print(f"[Community] Error opening: {e}")
+            self.status_label.config(text="Không thể mở Community", fg=colors["error"])
 
     def _update_speed(self, speed):
         """Update speed value"""
