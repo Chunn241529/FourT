@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --primary-hover: #9333ea;
+            --secondary: #ec4899;
+            --accent: #22c55e;
+            --bg-dark: #0f0f23;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Background */
+        .bg-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            animation: float-orb 20s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            top: -20%;
+            left: -10%;
+        }
+
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+            top: 40%;
+            left: 40%;
+            opacity: 0.2;
+            animation-delay: -10s;
+        }
+
+        @keyframes float-orb {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+        }
+
+        /* Grid */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+        }
+
+        /* Logo Container */
+        .logo-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.6)) drop-shadow(0 0 60px rgba(168, 85, 247, 0.4));
+            animation: logo-pulse 3s infinite ease-in-out;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Lightning Effect */
+        .lightning-effect {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.3) 0%, transparent 70%);
+            animation: lightning-pulse 2s infinite ease-in-out;
+            z-index: 1;
+        }
+
+        .lightning-effect::before,
+        .lightning-effect::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            animation: lightning-ring 2s infinite ease-out;
+        }
+
+        .lightning-effect::before {
+            width: 120px;
+            height: 120px;
+            border: 2px solid rgba(168, 85, 247, 0.5);
+        }
+
+        .lightning-effect::after {
+            width: 160px;
+            height: 160px;
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            animation-delay: 0.5s;
+        }
+
+        @keyframes lightning-pulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes lightning-ring {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes logo-pulse {
+
+            0%,
+            100% {
+                transform: scale(1) rotate(0deg);
+                filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.6)) drop-shadow(0 0 60px rgba(168, 85, 247, 0.4));
+            }
+
+            50% {
+                transform: scale(1.05) rotate(2deg);
+                filter: drop-shadow(0 0 40px rgba(124, 58, 237, 0.8)) drop-shadow(0 0 80px rgba(168, 85, 247, 0.6));
+            }
+        }
+
+        /* Particles */
+        .particle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: rise var(--duration) infinite linear;
+            bottom: -10px;
+        }
+
+        @keyframes rise {
+            to {
+                transform: translateY(-100vh) translateX(50px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background -->
+    <div class="bg-wrapper">
+        <div class="grid-overlay"></div>
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Particles -->
+    <script>
+        for (let i = 0; i < 15; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.setProperty('--duration', (8 + Math.random() * 6) + 's');
+            p.style.animationDelay = Math.random() * 8 + 's';
+            document.body.appendChild(p);
+        }
+    </script>
+
+    <!-- Logo -->
+    <div class="logo-container">
+        <div class="lightning-effect"></div>
+        <img src="/favicon.ico" alt="FourT" class="logo">
+    </div>
+
+    <!-- Search and redirect -->
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const query = params.get('q') || '';
+
+        async function searchAndRedirect() {
+            try {
+                const response = await fetch(`/api/youtube/search?q=${encodeURIComponent(query)}&limit=1`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.first_video_url) {
+                        window.location.href = data.first_video_url;
+                        return;
+                    }
+                }
+
+                // Fallback
+                window.location.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+            } catch (error) {
+                console.error('Search error:', error);
+                setTimeout(() => {
+                    window.location.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+                }, 2000);
+            }
+        }
+
+        searchAndRedirect();
+    </script>
+</body>
+
+</html>

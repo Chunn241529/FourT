@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI của tôi - FourT MIDI Community</title>
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/community/community.css">
+</head>
+
+<body>
+    <div class="bg-wrapper">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="/favicon.ico" alt="FourT" class="nav-logo-img">
+                <span>FourT MIDI</span>
+            </a>
+            <div class="nav-links">
+                <a href="/community" class="nav-link">🎵 Khám phá</a>
+                <a href="/community/leaderboard" class="nav-link">🏆 Bảng xếp hạng</a>
+                <a href="/community/upload" class="nav-link">⬆️ Upload</a>
+            </div>
+            <div class="nav-user" id="nav-user">
+                <div class="user-points" id="user-points">💰 0 pts</div>
+                <div class="user-avatar" onclick="toggleUserMenu()">
+                    <span id="user-initial">U</span>
+                </div>
+                <div class="user-menu" id="user-menu">
+                    <a href="/community/profile" class="user-menu-item">👤 Hồ sơ</a>
+                    <a href="/community/my-midi" class="user-menu-item active">🎵 MIDI của tôi</a>
+                    <a href="/community/downloads" class="user-menu-item">📥 Đã tải</a>
+                    <a href="/community/checkin" class="user-menu-item">✨ Check-in</a>
+                    <hr>
+                    <a href="#" class="user-menu-item logout" onclick="logout()">🚪 Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <section class="community-hero" style="padding-bottom: 20px;">
+                <h1 class="hero-title">
+                    <span class="title-icon">🎵</span>
+                    <span class="text-gradient">MIDI Của Tôi</span>
+                </h1>
+                <p class="hero-subtitle">Quản lý các bản MIDI bạn đã upload</p>
+            </section>
+
+            <section class="my-midi-container">
+                <div class="midi-grid" id="midi-grid">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p>Đang tải...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/community/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/community';
+                return;
+            }
+            await checkAuth();
+            loadMyMidi();
+        });
+
+        async function loadMyMidi() {
+            try {
+                const response = await fetchWithAuth('/community/my/midi');
+                const data = await response.json();
+
+                const grid = document.getElementById('midi-grid');
+
+                if (data.length === 0) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🎵</div>
+                            <h3>Chưa có MIDI nào</h3>
+                            <p>Bạn chưa upload MIDI nào. <a href="/community/upload">Upload ngay!</a></p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = data.map(midi => `
+                    <div class="my-midi-card">
+                        <div class="midi-card-header">
+                            <div class="midi-card-icon">🎵</div>
+                            <span class="midi-status ${midi.status}">${getStatusLabel(midi.status)}</span>
+                        </div>
+                        <h3 class="midi-card-title">${escapeHtml(midi.title)}</h3>
+                        <div class="midi-card-stats">
+                            <div class="midi-stat">⭐ <span class="midi-stat-value">${midi.avg_rating?.toFixed(1) || '0.0'}</span></div>
+                            <div class="midi-stat">⬇️ <span class="midi-stat-value">${formatNumber(midi.download_count)}</span></div>
+                        </div>
+                        <div class="midi-card-footer">
+                            <span class="upload-date">📅 ${formatDate(midi.created_at)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('midi-grid').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <h3>Lỗi tải dữ liệu</h3>
+                    </div>
+                `;
+            }
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                pending: '⏳ Đang chờ duyệt',
+                approved: '✅ Đã duyệt',
+                rejected: '❌ Từ chối'
+            };
+            return labels[status] || status;
+        }
+    </script>
+
+    <style>
+        .my-midi-container {
+            padding-bottom: 60px;
+        }
+
+        .my-midi-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .midi-status {
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .midi-status.pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .midi-status.approved {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .midi-status.rejected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .upload-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+</body>
+
+</html>

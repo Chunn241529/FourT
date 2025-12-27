@@ -69,6 +69,46 @@ body {
     transform: scale(1.1);
 }
 
+/* Community Float Button */
+.community-float {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+    animation: community-pulse 3s ease-in-out infinite;
+}
+
+.community-float:hover {
+    transform: scale(1.15);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+}
+
+@keyframes community-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 25px rgba(236, 72, 153, 0.6);
+    }
+}
+
 /* Background Animations */
 .bg-wrapper {
     position: fixed;
@@ -832,22 +872,23 @@ body {
 
     .hero {
         min-height: 100vh;
-        min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+        min-height: 100dvh;
+        /* Dynamic viewport height for mobile browsers */
         padding: 40px 0;
         justify-content: center;
     }
-    
+
     .stats-bar {
         /* Keep horizontal layout on mobile */
         gap: 24px;
         padding: 20px;
         margin-top: 20px;
     }
-    
+
     .stat-value {
         font-size: 28px;
     }
-    
+
     .stat-label {
         font-size: 11px;
     }

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload MIDI - FourT MIDI Community</title>
+    <meta name="description" content="Upload và chia sẻ MIDI files với cộng đồng FourT">
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/community/community.css">
+</head>
+
+<body>
+    <!-- Background Effects -->
+    <div class="bg-wrapper">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="/favicon.ico" alt="FourT" class="nav-logo-img">
+                <span>FourT MIDI</span>
+            </a>
+            <div class="nav-links">
+                <a href="/community" class="nav-link">🎵 Khám phá</a>
+                <a href="/community/leaderboard" class="nav-link">🏆 Bảng xếp hạng</a>
+                <a href="/community/upload" class="nav-link active">⬆️ Upload</a>
+            </div>
+            <div class="nav-auth" id="nav-auth">
+                <button class="btn btn-outline" onclick="showLoginModal()">Đăng nhập</button>
+                <button class="btn btn-primary" onclick="showRegisterModal()">Đăng ký</button>
+            </div>
+            <div class="nav-user" id="nav-user" style="display: none;">
+                <div class="user-points" id="user-points">💰 0 pts</div>
+                <div class="user-avatar" onclick="toggleUserMenu()">
+                    <span id="user-initial">U</span>
+                </div>
+                <div class="user-menu" id="user-menu">
+                    <a href="/community/profile" class="user-menu-item">👤 Hồ sơ</a>
+                    <a href="/community/my-midi" class="user-menu-item">🎵 MIDI của tôi</a>
+                    <a href="/community/downloads" class="user-menu-item">📥 Đã tải</a>
+                    <a href="/community/checkin" class="user-menu-item">✨ Check-in</a>
+                    <hr>
+                    <a href="#" class="user-menu-item logout" onclick="logout()">🚪 Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Hero Section -->
+            <section class="community-hero">
+                <h1 class="hero-title">
+                    <span class="title-icon">⬆️</span>
+                    <span class="text-gradient">Upload MIDI</span>
+                </h1>
+                <p class="hero-subtitle">Chia sẻ MIDI với cộng đồng và nhận +5 điểm!</p>
+            </section>
+
+            <!-- Upload Form -->
+            <section class="upload-container">
+                <div class="upload-card" id="upload-card">
+                    <!-- Login Required State -->
+                    <div class="login-required" id="login-required">
+                        <div class="login-icon">🔒</div>
+                        <h3>Đăng nhập để upload</h3>
+                        <p>Bạn cần đăng nhập để chia sẻ MIDI với cộng đồng</p>
+                        <button class="btn btn-primary" onclick="showLoginModal()">Đăng nhập ngay</button>
+                    </div>
+
+                    <!-- Upload Form (shown when logged in) -->
+                    <form class="upload-form" id="upload-form" style="display: none;" onsubmit="handleUpload(event)">
+                        <!-- File Drop Zone -->
+                        <div class="drop-zone" id="drop-zone">
+                            <div class="drop-icon">🎵</div>
+                            <p class="drop-text">Kéo thả file MIDI vào đây</p>
+                            <p class="drop-hint">hoặc click để chọn file</p>
+                            <input type="file" id="file-input" accept=".mid,.midi" hidden>
+                        </div>
+                        <div class="selected-file" id="selected-file" style="display: none;">
+                            <span class="file-icon">📄</span>
+                            <span class="file-name" id="file-name"></span>
+                            <button type="button" class="remove-file" onclick="removeFile()">✕</button>
+                        </div>
+
+                        <!-- Form Fields -->
+                        <div class="form-group">
+                            <label>Tên bài hát *</label>
+                            <input type="text" id="midi-title" required placeholder="VD: Lạc Trôi - Piano Cover">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mô tả</label>
+                            <textarea id="midi-description" rows="3"
+                                placeholder="Mô tả về bản MIDI của bạn..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tags (phân cách bởi dấu phẩy)</label>
+                            <input type="text" id="midi-tags" placeholder="VD: vpop, piano, ballad">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Loại MIDI</label>
+                            <select id="midi-type">
+                                <option value="normal">🎵 Normal (3 pts để tải)</option>
+                                <option value="premium">⭐ Premium (8 pts để tải)</option>
+                                <option value="exclusive">💎 Exclusive (15 pts để tải)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
+                            ⬆️ Upload MIDI
+                        </button>
+
+                        <p class="upload-note">
+                            📌 MIDI sẽ được duyệt trước khi hiển thị công khai.<br>
+                            🎁 Bạn sẽ nhận +5 điểm khi MIDI được duyệt!
+                        </p>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-overlay" onclick="closeModals()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModals()">×</button>
+            <h2 class="modal-title">🔐 Đăng nhập</h2>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="login-password" required placeholder="••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Đăng nhập</button>
+            </form>
+            <p class="modal-footer-text">
+                Chưa có tài khoản? <a href="#" onclick="showRegisterModal()">Đăng ký ngay</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="register-modal">
+        <div class="modal-overlay" onclick="closeModals()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModals()">×</button>
+            <h2 class="modal-title">✨ Đăng ký</h2>
+            <form id="register-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>Tên người dùng</label>
+                    <input type="text" id="register-username" required placeholder="username" minlength="3"
+                        maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="register-email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="register-password" required placeholder="Ít nhất 6 ký tự" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Đăng ký (+5 điểm)</button>
+            </form>
+            <p class="modal-footer-text">
+                Đã có tài khoản? <a href="#" onclick="showLoginModal()">Đăng nhập</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="/community/app.js"></script>
+    <script>
+        let selectedFile = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuthAndUpdateUI();
+            setupDropZone();
+        });
+
+        function checkAuthAndUpdateUI() {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                document.getElementById('login-required').style.display = 'none';
+                document.getElementById('upload-form').style.display = 'block';
+                checkAuth().then(() => {
+                    updateMidiTypeOptions();
+                });
+            }
+        }
+
+        // Restrict MIDI type options based on user rank
+        function updateMidiTypeOptions() {
+            if (!currentUser) return;
+
+            const typeSelect = document.getElementById('midi-type');
+            const rank = currentUser.rank || 'newcomer';
+
+            // Ranks that can upload premium/exclusive
+            const premiumRanks = ['contributor', 'artist', 'star', 'legend'];
+            const canUploadPremium = premiumRanks.includes(rank);
+
+            // Update options
+            Array.from(typeSelect.options).forEach(option => {
+                if (option.value === 'premium' || option.value === 'exclusive') {
+                    option.disabled = !canUploadPremium;
+                    if (!canUploadPremium) {
+                        option.text = option.value === 'premium'
+                            ? '⭐ Premium (yêu cầu rank Contributor+)'
+                            : '💎 Exclusive (yêu cầu rank Contributor+)';
+                    }
+                }
+            });
+
+            // Reset to normal if currently selecting a disabled option
+            if (!canUploadPremium && (typeSelect.value === 'premium' || typeSelect.value === 'exclusive')) {
+                typeSelect.value = 'normal';
+            }
+        }
+
+        function setupDropZone() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) handleFileSelect(files[0]);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFileSelect(e.target.files[0]);
+            });
+        }
+
+        function handleFileSelect(file) {
+            if (!file.name.match(/\.(mid|midi)$/i)) {
+                showToast('Vui lòng chọn file MIDI (.mid hoặc .midi)', 'error');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File quá lớn (tối đa 5MB)', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            document.getElementById('drop-zone').style.display = 'none';
+            document.getElementById('selected-file').style.display = 'flex';
+            document.getElementById('file-name').textContent = file.name;
+
+            // Auto-fill title from filename
+            const title = document.getElementById('midi-title');
+            if (!title.value) {
+                title.value = file.name.replace(/\.(mid|midi)$/i, '');
+            }
+        }
+
+        function removeFile() {
+            selectedFile = null;
+            document.getElementById('drop-zone').style.display = 'block';
+            document.getElementById('selected-file').style.display = 'none';
+            document.getElementById('file-input').value = '';
+        }
+
+        async function handleUpload(e) {
+            e.preventDefault();
+
+            if (!selectedFile) {
+                showToast('Vui lòng chọn file MIDI', 'error');
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                showToast('Vui lòng đăng nhập', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('title', document.getElementById('midi-title').value);
+            formData.append('description', document.getElementById('midi-description').value);
+            formData.append('tags', document.getElementById('midi-tags').value);
+            formData.append('midi_type', document.getElementById('midi-type').value);
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Đang upload...';
+
+            try {
+                const response = await fetch('/api/community/midi', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('Upload thành công! MIDI đang chờ duyệt.', 'success');
+                    // Reset form
+                    removeFile();
+                    document.getElementById('upload-form').reset();
+                } else {
+                    showToast(data.detail || 'Upload thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối server', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⬆️ Upload MIDI';
+            }
+        }
+    </script>
+
+    <style>
+        .upload-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 60px;
+        }
+
+        .upload-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+        }
+
+        .login-required {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .login-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .login-required h3 {
+            margin-bottom: 8px;
+        }
+
+        .login-required p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.1);
+        }
+
+        .drop-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .drop-text {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .drop-hint {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .selected-file {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .file-icon {
+            font-size: 24px;
+        }
+
+        .file-name {
+            flex: 1;
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        .remove-file {
+            background: rgba(239, 68, 68, 0.2);
+            border: none;
+            color: #ef4444;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .remove-file:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .upload-form .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .upload-form .form-group select {
+            cursor: pointer;
+        }
+
+        .upload-note {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+    </style>
+</body>
+
+</html>

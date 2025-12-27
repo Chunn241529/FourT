@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-in hàng ngày - FourT MIDI Community</title>
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/community/community.css">
+</head>
+
+<body>
+    <div class="bg-wrapper">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="/favicon.ico" alt="FourT" class="nav-logo-img">
+                <span>FourT MIDI</span>
+            </a>
+            <div class="nav-links">
+                <a href="/community" class="nav-link">🎵 Khám phá</a>
+                <a href="/community/leaderboard" class="nav-link">🏆 Bảng xếp hạng</a>
+                <a href="/community/upload" class="nav-link">⬆️ Upload</a>
+            </div>
+            <div class="nav-user" id="nav-user">
+                <div class="user-points" id="user-points">💰 0 pts</div>
+                <div class="user-avatar" onclick="toggleUserMenu()">
+                    <span id="user-initial">U</span>
+                </div>
+                <div class="user-menu" id="user-menu">
+                    <a href="/community/profile" class="user-menu-item">👤 Hồ sơ</a>
+                    <a href="/community/my-midi" class="user-menu-item">🎵 MIDI của tôi</a>
+                    <a href="/community/downloads" class="user-menu-item">📥 Đã tải</a>
+                    <a href="/community/checkin" class="user-menu-item active">✨ Check-in</a>
+                    <hr>
+                    <a href="#" class="user-menu-item logout" onclick="logout()">🚪 Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <section class="community-hero" style="padding-bottom: 20px;">
+                <h1 class="hero-title">
+                    <span class="title-icon">✨</span>
+                    <span class="text-gradient">Check-in</span>
+                </h1>
+                <p class="hero-subtitle">Điểm danh mỗi ngày để nhận điểm thưởng!</p>
+            </section>
+
+            <section class="checkin-container">
+                <div class="checkin-card">
+                    <div class="streak-display">
+                        <div class="streak-number" id="streak-number">0</div>
+                        <div class="streak-label">Ngày liên tiếp 🔥</div>
+                    </div>
+
+                    <div class="checkin-info">
+                        <div class="checkin-reward">
+                            <span class="reward-label">Phần thưởng hôm nay</span>
+                            <span class="reward-value" id="reward-value">+2 điểm</span>
+                        </div>
+                        <p class="checkin-note">Streak càng cao, phần thưởng càng lớn!</p>
+                    </div>
+
+                    <button class="btn btn-primary btn-full btn-large" id="checkin-btn" onclick="doCheckin()">
+                        ✨ Điểm danh ngay
+                    </button>
+
+                    <div class="checkin-done" id="checkin-done" style="display: none;">
+                        <div class="done-icon">✅</div>
+                        <h3>Đã điểm danh hôm nay!</h3>
+                        <p>Quay lại vào ngày mai để tiếp tục streak</p>
+                    </div>
+                </div>
+
+                <div class="streak-rewards">
+                    <h3>🎁 Bảng phần thưởng Streak</h3>
+                    <div class="rewards-table">
+                        <div class="reward-row">
+                            <span>1-6 ngày</span><span>+2 điểm</span>
+                        </div>
+                        <div class="reward-row">
+                            <span>7 ngày (1 tuần)</span><span>+5 điểm 🎉</span>
+                        </div>
+                        <div class="reward-row">
+                            <span>8-29 ngày</span><span>+3 điểm</span>
+                        </div>
+                        <div class="reward-row special">
+                            <span>30 ngày (1 tháng)</span><span>+15 điểm 🏆</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/community/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/community';
+                return;
+            }
+            await checkAuth();
+            updateCheckinUI();
+        });
+
+        function updateCheckinUI() {
+            if (!currentUser) return;
+
+            // Use checkin_streak instead of daily_streak
+            const streak = currentUser.checkin_streak || 0;
+            document.getElementById('streak-number').textContent = streak;
+
+            // Calculate next reward (same logic as backend)
+            // Next check-in will be streak + 1
+            const nextStreak = streak + 1;
+            let reward;
+            if (nextStreak === 7) {
+                reward = 5;
+            } else if (nextStreak === 30) {
+                reward = 15;
+            } else if (nextStreak > 7) {
+                reward = 3;
+            } else {
+                reward = 2;
+            }
+
+            document.getElementById('reward-value').textContent = `+${reward} điểm`;
+
+            // Check if already checked in today
+            if (currentUser.last_checkin) {
+                const lastCheckin = new Date(currentUser.last_checkin);
+                const today = new Date();
+                if (lastCheckin.toDateString() === today.toDateString()) {
+                    showAlreadyCheckedIn();
+                }
+            }
+        }
+
+        function showAlreadyCheckedIn() {
+            document.getElementById('checkin-btn').style.display = 'none';
+            document.getElementById('checkin-done').style.display = 'block';
+        }
+
+        async function doCheckin() {
+            const btn = document.getElementById('checkin-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Đang điểm danh...';
+
+            try {
+                const response = await fetchWithAuth('/auth/checkin', { method: 'POST' });
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast(`✨ Điểm danh thành công! +${data.points_earned} điểm`, 'success');
+                    showAlreadyCheckedIn();
+                    document.getElementById('streak-number').textContent = data.new_streak;
+                    // Update points display
+                    await checkAuth();
+                } else {
+                    if (data.detail?.includes('already')) {
+                        showToast('Bạn đã điểm danh hôm nay rồi!', 'info');
+                        showAlreadyCheckedIn();
+                    } else {
+                        showToast(data.detail || 'Lỗi điểm danh', 'error');
+                    }
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✨ Điểm danh ngay';
+            }
+        }
+    </script>
+
+    <style>
+        .checkin-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding-bottom: 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .checkin-card,
+        .streak-rewards {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .streak-display {
+            margin-bottom: 32px;
+        }
+
+        .streak-number {
+            font-size: 72px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .streak-label {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .checkin-info {
+            margin-bottom: 32px;
+        }
+
+        .checkin-reward {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .reward-label {
+            color: var(--text-secondary);
+        }
+
+        .reward-value {
+            font-weight: 700;
+            color: #22c55e;
+            font-size: 18px;
+        }
+
+        .checkin-note {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .btn-large {
+            padding: 18px;
+            font-size: 18px;
+        }
+
+        .checkin-done {
+            padding: 24px;
+        }
+
+        .done-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .checkin-done h3 {
+            color: #22c55e;
+            margin-bottom: 8px;
+        }
+
+        .checkin-done p {
+            color: var(--text-secondary);
+        }
+
+        .streak-rewards h3 {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .rewards-table {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .reward-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .reward-row.special {
+            background: linear-gradient(90deg, rgba(251, 191, 36, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .reward-row span:last-child {
+            font-weight: 600;
+            color: #22c55e;
+        }
+    </style>
+</body>
+
+</html>

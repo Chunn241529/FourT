@@ -11,18 +11,20 @@
 .env.*
 !.env.example
 
-# Server sensitive files
-server/.env
-server/server_config.json
-server/data/*.db
-server/data/*.sqlite
-server/cloudflare/
+# # Server sensitive files
+# server/.env
+# server/server_config.json
+# server/data/*.db
+# server/data/*.sqlite
+# server/cloudflare/
 
-server/
+# server/
+
+
 
 
 # Root level sensitive files
-patch_main.py
+# patch_main.py
 test_ui.py
 test.py
 git.sh
@@ -76,6 +78,8 @@ midi_files/
 #Release
 client/releases
 client/data
+client/dist
+client/build
 
 # ==================================
 # PYTHON ARTIFACTS
@@ -245,7 +249,7 @@ cython_debug/
 AUTO_UPDATE_GUIDE.md
 AUTO_UPDATE_RELEASE.md
 favicon_io.zip
-admin_manifest.xml
+# admin_manifest.xml
 
 # ==================================
 # OPTIONAL - Uncomment if needed

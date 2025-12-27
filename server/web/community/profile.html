@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ - FourT MIDI Community</title>
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/community/community.css">
+</head>
+
+<body>
+    <div class="bg-wrapper">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="/favicon.ico" alt="FourT" class="nav-logo-img">
+                <span>FourT MIDI</span>
+            </a>
+            <div class="nav-links">
+                <a href="/community" class="nav-link">🎵 Khám phá</a>
+                <a href="/community/leaderboard" class="nav-link">🏆 Bảng xếp hạng</a>
+                <a href="/community/upload" class="nav-link">⬆️ Upload</a>
+            </div>
+            <div class="nav-user" id="nav-user">
+                <div class="user-points" id="user-points">💰 0 pts</div>
+                <div class="user-avatar" onclick="toggleUserMenu()">
+                    <span id="user-initial">U</span>
+                </div>
+                <div class="user-menu" id="user-menu">
+                    <a href="/community/profile" class="user-menu-item active">👤 Hồ sơ</a>
+                    <a href="/community/my-midi" class="user-menu-item">🎵 MIDI của tôi</a>
+                    <a href="/community/downloads" class="user-menu-item">📥 Đã tải</a>
+                    <a href="/community/checkin" class="user-menu-item">✨ Check-in</a>
+                    <hr>
+                    <a href="#" class="user-menu-item logout" onclick="logout()">🚪 Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <section class="community-hero" style="padding-bottom: 20px;">
+                <h1 class="hero-title">
+                    <span class="title-icon">👤</span>
+                    <span class="text-gradient">Hồ Sơ</span>
+                </h1>
+            </section>
+
+            <section class="profile-container">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar" id="profile-avatar">U</div>
+                        <div class="profile-info">
+                            <h2 id="profile-username">Loading...</h2>
+                            <span class="profile-rank" id="profile-rank">newcomer</span>
+                            <p class="profile-email" id="profile-email"></p>
+                        </div>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="stat-points">0</div>
+                            <div class="stat-label">Điểm hiện tại</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="stat-total">0</div>
+                            <div class="stat-label">Tổng điểm kiếm</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="stat-streak">0</div>
+                            <div class="stat-label">Streak 🔥</div>
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+                        <a href="/community/my-midi" class="btn btn-outline">🎵 MIDI của tôi</a>
+                        <a href="/community/downloads" class="btn btn-outline">📥 Đã tải</a>
+                        <a href="/community/checkin" class="btn btn-primary">✨ Check-in hôm nay</a>
+                    </div>
+                </div>
+
+                <div class="points-history-card">
+                    <h3>📊 Lịch sử điểm gần đây</h3>
+                    <div class="points-list" id="points-list">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/community/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/community';
+                return;
+            }
+            await checkAuth();
+            loadProfile();
+            loadPointsHistory();
+        });
+
+        async function loadProfile() {
+            if (!currentUser) return;
+
+            document.getElementById('profile-avatar').textContent = currentUser.username[0].toUpperCase();
+            document.getElementById('profile-username').textContent = currentUser.username;
+            document.getElementById('profile-email').textContent = currentUser.email;
+            document.getElementById('profile-rank').textContent = currentUser.rank;
+            document.getElementById('profile-rank').className = 'profile-rank rank-' + currentUser.rank;
+            document.getElementById('stat-points').textContent = formatNumber(currentUser.points);
+            document.getElementById('stat-total').textContent = formatNumber(currentUser.total_points_earned);
+            document.getElementById('stat-streak').textContent = currentUser.checkin_streak || 0;
+        }
+
+        // Map reason codes to readable labels
+        const REASON_LABELS = {
+            'register_bonus': 'Đăng ký tài khoản',
+            'daily_checkin': 'Check-in hàng ngày',
+            'streak_bonus': 'Bonus streak',
+            'upload_approved': 'Upload được duyệt',
+            'comment': 'Bình luận',
+            'download_midi': 'Tải MIDI',
+            'download_received': 'Có người tải MIDI của bạn',
+            'milestone_50_downloads': '50 lượt tải',
+            'milestone_100_downloads': '100 lượt tải',
+            'rating_received': 'Nhận đánh giá',
+            'referral': 'Giới thiệu bạn bè'
+        };
+
+        async function loadPointsHistory() {
+            try {
+                const response = await fetchWithAuth('/community/points/history?limit=10');
+                const data = await response.json();
+
+                const list = document.getElementById('points-list');
+                if (data.length === 0) {
+                    list.innerHTML = '<p class="empty-text">Chưa có lịch sử điểm</p>';
+                    return;
+                }
+
+                list.innerHTML = data.map(item => `
+                    <div class="point-item ${item.amount > 0 ? 'positive' : 'negative'}">
+                        <div class="point-info">
+                            <span class="point-action">${REASON_LABELS[item.reason] || item.reason}</span>
+                            <span class="point-time">${formatDate(item.created_at)}</span>
+                        </div>
+                        <div class="point-amount">${item.amount > 0 ? '+' : ''}${item.amount}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('points-list').innerHTML = '<p class="error-text">Lỗi tải dữ liệu</p>';
+            }
+        }
+    </script>
+
+    <style>
+        .profile-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding-bottom: 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .profile-card,
+        .points-history-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .profile-info h2 {
+            margin-bottom: 8px;
+        }
+
+        .profile-rank {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: rgba(100, 100, 100, 0.3);
+            margin-bottom: 8px;
+        }
+
+        .rank-newcomer {
+            background: rgba(100, 100, 100, 0.3);
+            color: #aaa;
+        }
+
+        .rank-player {
+            background: rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+        }
+
+        .rank-contributor {
+            background: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .rank-artist {
+            background: rgba(168, 85, 247, 0.3);
+            color: #a855f7;
+        }
+
+        .rank-star {
+            background: rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+        }
+
+        .rank-legend {
+            background: rgba(236, 72, 153, 0.3);
+            color: #ec4899;
+        }
+
+        .profile-email {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .stat-box .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-box .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .profile-actions .btn {
+            flex: 1;
+            min-width: 150px;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .points-history-card h3 {
+            margin-bottom: 20px;
+        }
+
+        .point-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 8px;
+        }
+
+        .point-action {
+            font-weight: 500;
+        }
+
+        .point-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-left: 12px;
+        }
+
+        .point-amount {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .point-item.positive .point-amount {
+            color: #22c55e;
+        }
+
+        .point-item.negative .point-amount {
+            color: #ef4444;
+        }
+
+        .empty-text,
+        .error-text {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .profile-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+
+</html>
