@@ -160,6 +160,19 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toast-container"></div>
 
+    <!-- MIDI Mini Player Bar -->
+    <div class="midi-player-bar" id="midi-player-bar">
+        <div class="player-info">
+            <span class="player-status" id="player-status">🎵</span>
+            <span class="player-title" id="player-title">Chọn bài để nghe thử</span>
+        </div>
+        <div class="player-controls">
+            <button class="player-btn" id="player-play-btn" onclick="togglePlay()" disabled>▶️</button>
+        </div>
+    </div>
+
+    <!-- MIDIjs Library for MIDI playback -->
+    <script src="https://www.midijs.net/lib/midi.js"></script>
     <script src="/community/app.js"></script>
 </body>
 

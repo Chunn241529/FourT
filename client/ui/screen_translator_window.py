@@ -615,13 +615,26 @@ class ScreenTranslatorWindow:
         def process():
             try:
                 from PIL import ImageGrab
+                from services.ocr_addon_manager import is_valid_text
 
                 screenshot = ImageGrab.grab(bbox=(x, y, x + w, y + h))
 
                 text = self.ocr_manager.extract_text(screenshot)
+
+                # Validate OCR text
                 if not text or not text.strip():
                     self.root.after(
                         0, lambda: self._show_error("Không nhận diện được text")
+                    )
+                    return
+
+                # Check if text is valid/meaningful
+                if not is_valid_text(text):
+                    self.root.after(
+                        0,
+                        lambda: self._show_error(
+                            "Text không rõ ràng, vui lòng chọn vùng khác"
+                        ),
                     )
                     return
 
@@ -679,6 +692,7 @@ class ScreenTranslatorWindow:
 
         def loop():
             from PIL import ImageGrab
+            from services.ocr_addon_manager import is_valid_text
 
             skip_first = self.skip_first_line.get()
             try:
@@ -691,7 +705,8 @@ class ScreenTranslatorWindow:
                     screenshot = ImageGrab.grab(bbox=(x, y, x + w, y + h))
                     text = self.ocr_manager.extract_text(screenshot)
 
-                    if text and text.strip():
+                    # Validate text before processing - skip garbage OCR results
+                    if text and text.strip() and is_valid_text(text):
                         text_clean = text.strip()
 
                         # Format: First line is character name, rest is dialogue
@@ -699,10 +714,17 @@ class ScreenTranslatorWindow:
                             lines = text_clean.split("\n")
                             if len(lines) > 1:
                                 dialogue = " ".join(lines[1:]).strip()
-                                if dialogue:
+                                if dialogue and is_valid_text(dialogue):
                                     text_clean = dialogue
+                                elif not dialogue:
+                                    # No dialogue after removing first line, skip
+                                    continue
 
-                        if text_clean and self._text_significantly_different(
+                        # Double-check cleaned text is still valid
+                        if not text_clean or not is_valid_text(text_clean):
+                            continue
+
+                        if self._text_significantly_different(
                             text_clean, self._last_text
                         ):
                             self._last_text = text_clean
@@ -711,16 +733,18 @@ class ScreenTranslatorWindow:
                                 text_clean, dest=self.target_lang, src=self.source_lang
                             )
 
-                            if self._text_significantly_different(
-                                translated, self._last_translated
-                            ):
-                                self._last_translated = translated
-                                self.root.after(
-                                    0,
-                                    lambda t=translated, d=detected: self.overlay.show_text(
-                                        text_clean, t, d
-                                    ),
-                                )
+                            # Validate translation result too
+                            if translated and len(translated.strip()) >= 2:
+                                if self._text_significantly_different(
+                                    translated, self._last_translated
+                                ):
+                                    self._last_translated = translated
+                                    self.root.after(
+                                        0,
+                                        lambda t=translated, d=detected: self.overlay.show_text(
+                                            text_clean, t, d
+                                        ),
+                                    )
 
                 except Exception as e:
                     print(f"[ScreenTranslator] Realtime error: {e}")

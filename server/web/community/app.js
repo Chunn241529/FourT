@@ -13,6 +13,11 @@ let currentPage = 1;
 let currentSort = 'newest';
 let currentSearch = '';
 
+// MIDI Player State
+let currentlyPlayingId = null;
+let currentlyPlayingTitle = '';
+let isPlaying = false;
+
 // ============== Initialization ==============
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -314,6 +319,10 @@ async function showMidiDetail(midiId) {
                 </div>
 
                 <div class="midi-detail-actions">
+                    <button class="btn btn-outline midi-preview-btn" id="detail-play-btn" 
+                            onclick="playMidi(${midi.id}, '${escapeHtml(midi.title).replace(/'/g, "\\'")}')">
+                        ${currentlyPlayingId === midi.id && isPlaying ? '⏸️' : '▶️'}
+                    </button>
                     <button class="btn btn-primary" onclick="downloadMidi(${midi.id})">
                         💾 Tải xuống (${getDownloadCost(currentUser?.rank || 'newcomer', midi.midi_type)} pts)
                     </button>
@@ -597,3 +606,144 @@ function formatDate(dateStr) {
 
     return date.toLocaleDateString('vi-VN');
 }
+
+// ============== MIDI Player Functions ==============
+
+/**
+ * Play a MIDI file from the community
+ * @param {number} midiId - ID of the MIDI file
+ * @param {string} title - Title of the MIDI file
+ */
+function playMidi(midiId, title) {
+    // If same MIDI is playing, toggle pause/play
+    if (currentlyPlayingId === midiId && isPlaying) {
+        stopMidi();
+        return;
+    }
+
+    // Stop any currently playing MIDI
+    if (isPlaying) {
+        MIDIjs.stop();
+    }
+
+    // Update state
+    currentlyPlayingId = midiId;
+    currentlyPlayingTitle = title;
+    isPlaying = true;
+
+    // Build preview URL
+    const previewUrl = `${API_BASE}/community/midi/${midiId}/preview`;
+
+    // Play using MIDIjs
+    try {
+        MIDIjs.play(previewUrl);
+
+        // Listen for when playback ends
+        MIDIjs.message_callback = function (message) {
+            if (message && message.includes && message.includes('ended')) {
+                onMidiEnded();
+            }
+        };
+
+        updatePlayerUI();
+        showToast(`🎵 Đang phát: ${title}`, 'success');
+    } catch (error) {
+        console.error('MIDI playback error:', error);
+        showToast('Không thể phát MIDI', 'error');
+        resetPlayerState();
+    }
+}
+
+/**
+ * Stop MIDI playback
+ */
+function stopMidi() {
+    if (typeof MIDIjs !== 'undefined') {
+        MIDIjs.stop();
+    }
+    resetPlayerState();
+    updatePlayerUI();
+}
+
+/**
+ * Toggle play/pause for current MIDI
+ */
+function togglePlay() {
+    if (!currentlyPlayingId) return;
+
+    if (isPlaying) {
+        stopMidi();
+    } else {
+        playMidi(currentlyPlayingId, currentlyPlayingTitle);
+    }
+}
+
+/**
+ * Called when MIDI playback ends naturally
+ */
+function onMidiEnded() {
+    resetPlayerState();
+    updatePlayerUI();
+}
+
+/**
+ * Reset player state
+ */
+function resetPlayerState() {
+    isPlaying = false;
+    // Keep currentlyPlayingId and title for "resume" capability
+}
+
+/**
+ * Update player UI elements
+ */
+function updatePlayerUI() {
+    const playerBar = document.getElementById('midi-player-bar');
+    const playerTitle = document.getElementById('player-title');
+    const playerPlayBtn = document.getElementById('player-play-btn');
+    const playerStatus = document.getElementById('player-status');
+    const detailPlayBtn = document.getElementById('detail-play-btn');
+
+    if (!playerBar) return;
+
+    // Update player bar visibility and state
+    if (currentlyPlayingId) {
+        playerBar.classList.add('active');
+        document.body.classList.add('player-active');
+        playerPlayBtn.disabled = false;
+        playerTitle.textContent = currentlyPlayingTitle || 'Unknown';
+    } else {
+        // Keep bar visible if we have a recent track
+        playerTitle.textContent = 'Chọn bài để nghe thử';
+        playerPlayBtn.disabled = true;
+    }
+
+    // Update play/pause state
+    if (isPlaying) {
+        playerBar.classList.add('playing');
+        playerPlayBtn.textContent = '⏸️';
+        playerStatus.textContent = '🎵';
+    } else {
+        playerBar.classList.remove('playing');
+        playerPlayBtn.textContent = '▶️';
+        playerStatus.textContent = '🎵';
+    }
+
+    // Update detail modal play button if visible
+    if (detailPlayBtn) {
+        if (isPlaying) {
+            detailPlayBtn.textContent = '⏸️';
+            detailPlayBtn.classList.add('playing');
+        } else {
+            detailPlayBtn.textContent = '▶️';
+            detailPlayBtn.classList.remove('playing');
+        }
+    }
+}
+
+// Check if MIDIjs is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof MIDIjs === 'undefined') {
+        console.warn('MIDIjs not loaded. MIDI playback will not work.');
+    }
+});

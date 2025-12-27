@@ -201,6 +201,32 @@ async def upload_midi(
     current_user: dict = Depends(get_current_user),
 ):
     """Upload a new MIDI file"""
+    # Daily upload limit: 3 MIDI files per user per day
+    DAILY_UPLOAD_LIMIT = 3
+
+    async with get_db() as db:
+        # Check today's upload count
+        today_start = (
+            datetime.now()
+            .replace(hour=0, minute=0, second=0, microsecond=0)
+            .isoformat()
+        )
+        cursor = await db.execute(
+            """
+            SELECT COUNT(*) as count FROM midi_files 
+            WHERE uploader_id = ? AND created_at >= ?
+        """,
+            (current_user["user_id"], today_start),
+        )
+        row = await cursor.fetchone()
+        today_uploads = row["count"] if row else 0
+
+        if today_uploads >= DAILY_UPLOAD_LIMIT:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Bạn đã đạt giới hạn upload {DAILY_UPLOAD_LIMIT} bài/ngày. Vui lòng quay lại ngày mai!",
+            )
+
     # Validate file
     if not file.filename.endswith(".mid") and not file.filename.endswith(".midi"):
         raise HTTPException(
@@ -400,6 +426,46 @@ async def get_midi_file(midi_id: int, current_user: dict = Depends(get_current_u
         return FileResponse(
             file_path, filename=f"{midi['title']}.mid", media_type="audio/midi"
         )
+
+
+@router.get("/midi/{midi_id}/preview")
+async def preview_midi(midi_id: int):
+    """
+    Preview/stream MIDI file for web player (no login required).
+    Only approved MIDI files can be previewed.
+    """
+    from fastapi.responses import FileResponse
+
+    async with get_db() as db:
+        # Get approved MIDI file
+        cursor = await db.execute(
+            """
+            SELECT m.file_path, m.title
+            FROM midi_files m
+            WHERE m.id = ? AND m.status = 'approved'
+        """,
+            (midi_id,),
+        )
+        row = await cursor.fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=404, detail="MIDI not found or not approved"
+            )
+
+        midi = dict(row)
+        file_path = os.path.join(MIDI_UPLOAD_DIR, midi["file_path"])
+
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="File not found on server")
+
+        # Return file with CORS headers for web player
+        response = FileResponse(
+            file_path, filename=f"{midi['title']}.mid", media_type="audio/midi"
+        )
+        # Allow cross-origin access for web MIDI player
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        return response
 
 
 # ============== Rating Endpoints ==============

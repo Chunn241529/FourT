@@ -10,9 +10,94 @@ import sys
 import subprocess
 import threading
 import asyncio
+import re
 from typing import Callable, Optional, Tuple, List, Dict, Any
 from PIL import Image
 from utils.version import get_app_directory
+
+
+def is_valid_text(text: str) -> bool:
+    """
+    Validate OCR text - reject garbage/incomplete text before translation.
+    Returns True only if text is meaningful enough for translation.
+
+    Filters:
+    - Too short text (< 3 chars)
+    - Low letter ratio (< 40% letters/CJK)
+    - Garbage patterns (|||, ---, etc.)
+    - Excessive repeated characters
+    - Pure numbers/symbols
+    """
+    if not text:
+        return False
+
+    text_clean = text.strip()
+
+    # Minimum length check
+    if len(text_clean) < 3:
+        return False
+
+    # Calculate letter ratio (letters + CJK + Japanese kana)
+    def is_meaningful_char(c):
+        return (
+            c.isalpha()
+            or "\u4e00" <= c <= "\u9fff"  # CJK
+            or "\u3040" <= c <= "\u309f"  # Hiragana
+            or "\u30a0" <= c <= "\u30ff"  # Katakana
+            or "\uac00" <= c <= "\ud7af"  # Korean
+        )
+
+    letter_count = sum(1 for c in text_clean if is_meaningful_char(c))
+    letter_ratio = letter_count / len(text_clean) if text_clean else 0
+
+    if letter_ratio < 0.35:  # Less than 35% meaningful chars
+        return False
+
+    # Check for common OCR garbage patterns
+    garbage_patterns = [
+        "|||",
+        "---",
+        "___",
+        "\\\\\\",
+        "///",
+        "!!!",
+        "???",
+        "...",
+        "~~~",
+        "***",
+        "###",
+        "@@@",
+        "$$$",
+        "lll",
+        "III",
+        "111",
+        "000",
+    ]
+    if any(p in text_clean for p in garbage_patterns):
+        return False
+
+    # Check for excessive repeated characters (> 50% same char)
+    if len(text_clean) >= 4:
+        char_counts = {}
+        for c in text_clean:
+            char_counts[c] = char_counts.get(c, 0) + 1
+        max_repeat = max(char_counts.values())
+        if max_repeat / len(text_clean) > 0.5:
+            return False
+
+    # Check for pure numbers (no letters at all)
+    if text_clean.isdigit():
+        return False
+
+    # Check for mostly whitespace/newlines
+    if len(text_clean.replace("\n", "").replace(" ", "")) < 2:
+        return False
+
+    # Check for single repeated word patterns like "AAAA" or "aaaa"
+    if len(set(text_clean.lower())) <= 2 and len(text_clean) > 3:
+        return False
+
+    return True
 
 
 class OCREngine:
@@ -877,12 +962,12 @@ class OCRAddonManager:
     def _preprocess_image(self, image: Image.Image) -> Image.Image:
         """
         Preprocess image for better OCR accuracy:
-        - Invert if dark background (game UI often has light text on dark bg)
-        - Scale up small images aggressively
-        - Enhance contrast and sharpness
-        - Convert to grayscale for better OCR
+        - Scale up small images aggressively for better recognition
+        - Enhance contrast for game UI with colored backgrounds
+        - Optional invert for light-on-dark text (common in games)
+        - Sharpen text edges
         """
-        from PIL import ImageEnhance, ImageOps
+        from PIL import ImageEnhance, ImageOps, ImageFilter
         import numpy as np
 
         width, height = image.size
@@ -891,15 +976,42 @@ class OCRAddonManager:
         if image.mode != "RGB":
             image = image.convert("RGB")
 
-        # For game dialogue (typically large enough), minimal preprocessing
-        # Windows OCR works best with original colors
-
-        # Only scale up if image is very small
-        if height < 60:
-            scale_factor = 2.0
+        # --- Scale up small images ---
+        # OCR works much better on larger text
+        min_height = 80  # Increased from 60
+        if height < min_height:
+            scale_factor = min_height / height
+            scale_factor = min(scale_factor, 3.0)  # Cap at 3x
             new_width = int(width * scale_factor)
             new_height = int(height * scale_factor)
             image = image.resize((new_width, new_height), Image.LANCZOS)
+            width, height = new_width, new_height
 
-        # Return RGB image directly - let OCR engine handle it
+        # --- Check if dark background (light text on dark) ---
+        # Convert to numpy for analysis
+        img_array = np.array(image)
+        avg_brightness = np.mean(img_array)
+
+        # If average brightness is low, likely dark background
+        is_dark_bg = avg_brightness < 100
+
+        if is_dark_bg:
+            # For dark backgrounds, enhance contrast before potential inversion
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(1.3)  # Boost contrast
+
+            # Optional: invert for tesseract (works better with black-on-white)
+            # But Windows OCR handles colored text well, so only slight adjustment
+            enhancer = ImageEnhance.Brightness(image)
+            image = enhancer.enhance(1.1)  # Slight brightness boost
+        else:
+            # Light background - enhance contrast slightly
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(1.15)
+
+        # --- Sharpen for cleaner text edges ---
+        # Helps with anti-aliased game fonts
+        enhancer = ImageEnhance.Sharpness(image)
+        image = enhancer.enhance(1.5)
+
         return image

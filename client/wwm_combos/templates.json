@@ -1,12 +1,8 @@
 {
   "templates": [
     {
-      "name": "Định thân",
+      "name": "Định thân nhanh",
       "items": [
-        {
-          "type": "delay",
-          "value": 0.2
-        },
         {
           "type": "skill",
           "id": "scroll_down",
@@ -35,25 +31,6 @@
           "description": "Làm bất động mục tiêu trong 2 giây, gây sát thương. Đồng thời [#3CB371:*hồi 30 Sức bền*] và [#20B2AA:*giảm 10%*] mức tiêu hao Sức bền trong 5 giây.\n[image: webp/qiankun_lock.webp]",
           "image": "nameless-spear-skill1.png",
           "countdown": 11.0
-        }
-      ]
-    },
-    {
-      "name": "charge",
-      "items": [
-        {
-          "type": "skill",
-          "id": "charge_attack",
-          "name": "Charge Attack",
-          "key": "mouse5",
-          "color": "#95a5a6",
-          "hold": 1.5,
-          "click_count": 1,
-          "weapon": "common",
-          "modifiers": [],
-          "description": "",
-          "image": "rmbcharge.png",
-          "countdown": 0
         }
       ]
     }

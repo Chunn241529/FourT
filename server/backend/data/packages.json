@@ -35,12 +35,14 @@
       "script_preview",
       "mp3_conversion",
       "macro",
-      "quest_video_helper"
+      "quest_video_helper",
+      "screen_translator"
     ],
     "feature_display": [
       "Tất cả tính năng Plus",
       "Macro cơ bản",
-      "Chuyển đổi MP3 sang MIDI"
+      "Chuyển đổi MP3 sang MIDI",
+      "Dịch màn hình"
     ],
     "limits": {
       "midi_file_limit": 999,
@@ -103,7 +105,7 @@
     "name": "Trial",
     "description": "Dùng thử tất cả tính năng",
     "price": 0,
-    "duration_days": 3,
+    "duration_days": 1,
     "order": -1,
     "features": [
       "midi_playback",
@@ -113,7 +115,8 @@
       "macro",
       "macro_unlimited",
       "wwm_combo",
-      "quest_video_helper"
+      "quest_video_helper",
+      "screen_translator"
     ],
     "feature_display": [
       "Dùng thử 30 phút",
