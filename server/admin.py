@@ -5,34 +5,47 @@ Launches the Admin UI with elevated privileges
 
 import sys
 import os
+import platform
 
 
 def is_admin():
     """Check if application is running with admin privileges"""
-    try:
-        import ctypes
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
+    if platform.system() == "Windows":
+        try:
+            import ctypes
+            return ctypes.windll.shell32.IsUserAnAdmin()
+        except:
+            return False
+    else:
+        # On Linux/macOS, check if running as root
+        return os.geteuid() == 0
 
 
 def run_as_admin():
     """Restart application with admin privileges"""
-    try:
-        import ctypes
+    if platform.system() == "Windows":
+        try:
+            import ctypes
+            if not is_admin():
+                # Get path to current script/exe
+                script = os.path.abspath(sys.argv[0])
+                params = " ".join([script] + sys.argv[1:])
+                
+                # Request UAC elevation
+                ctypes.windll.shell32.ShellExecuteW(
+                    None, "runas", sys.executable, params, None, 1  # SW_SHOWNORMAL
+                )
+                return True
+            return False
+        except Exception as e:
+            print(f"Error requesting admin privileges: {e}")
+            return False
+    else:
+        # On Linux/macOS, no automatic elevation - just continue without admin
+        # User can run with sudo if needed
         if not is_admin():
-            # Get path to current script/exe
-            script = os.path.abspath(sys.argv[0])
-            params = " ".join([script] + sys.argv[1:])
-            
-            # Request UAC elevation
-            ctypes.windll.shell32.ShellExecuteW(
-                None, "runas", sys.executable, params, None, 1  # SW_SHOWNORMAL
-            )
-            return True
-        return False
-    except Exception as e:
-        print(f"Error requesting admin privileges: {e}")
+            print("Note: Running without admin privileges. Some features may be limited.")
+            print("Run with 'sudo python3 admin.py' for full privileges.")
         return False
 
 

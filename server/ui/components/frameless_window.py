@@ -3,16 +3,24 @@ Frameless Window Base Class (Modern Rounded Style)
 Complete rewrite with robust drag and resize logic.
 """
 
+
 import tkinter as tk
-import ctypes
+import platform
 from ..theme import colors, FONTS
 
-# Windows API constants for taskbar icon support
+# Windows-specific imports
+IS_WINDOWS = platform.system() == "Windows"
 try:
-    GWL_EXSTYLE = -20
-    WS_EX_APPWINDOW = 0x00040000
-    WS_EX_TOOLWINDOW = 0x00000080
+    if IS_WINDOWS:
+        import ctypes
+        GWL_EXSTYLE = -20
+        WS_EX_APPWINDOW = 0x00040000
+        WS_EX_TOOLWINDOW = 0x00000080
+    else:
+        ctypes = None
+        GWL_EXSTYLE = None
 except:
+    ctypes = None
     GWL_EXSTYLE = None
 
 class FramelessWindow(tk.Toplevel):
@@ -35,7 +43,10 @@ class FramelessWindow(tk.Toplevel):
         # Window Setup
         self.overrideredirect(True)
         self.configure(bg=self.TRANSPARENT_KEY)
-        self.attributes('-transparentcolor', self.TRANSPARENT_KEY)
+        
+        # Transparency is Windows-only
+        if IS_WINDOWS:
+            self.attributes('-transparentcolor', self.TRANSPARENT_KEY)
         
         # Hide window initially to prevent flicker during setup
         self.attributes('-alpha', 0)
@@ -120,7 +131,7 @@ class FramelessWindow(tk.Toplevel):
     
     def _setup_taskbar_icon(self):
         """Setup Windows taskbar icon for frameless window"""
-        if GWL_EXSTYLE is None:
+        if not IS_WINDOWS or GWL_EXSTYLE is None or ctypes is None:
             return
         
         try:

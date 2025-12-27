@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import ttk
 import sys
 import threading
+import platform
 from pathlib import Path
 
 try:
@@ -195,8 +196,9 @@ class AdminWindow:
         # Create hidden root
         self.hidden_root = tk.Tk()
         self.hidden_root.withdraw()
-        # Prevent hidden root from showing in taskbar
-        self.hidden_root.wm_attributes("-toolwindow", True)
+        # Prevent hidden root from showing in taskbar (Windows only)
+        if platform.system() == "Windows":
+            self.hidden_root.wm_attributes("-toolwindow", True)
 
         # Create frameless window
         self.root = FramelessWindow(
@@ -506,10 +508,11 @@ class AdminWindow:
         """Minimize window to system tray"""
         # Hide window completely (both from screen and taskbar)
         self.root.withdraw()
-        # Also hide from taskbar using toolwindow attribute
+        # Also hide from taskbar using toolwindow attribute (Windows only)
         try:
             self.root.attributes("-alpha", 0)  # Make invisible first
-            self.root.wm_attributes("-toolwindow", True)
+            if platform.system() == "Windows":
+                self.root.wm_attributes("-toolwindow", True)
         except tk.TclError:
             pass
 
@@ -520,8 +523,9 @@ class AdminWindow:
     def _do_show_window(self):
         """Actually show window (must be called from main thread)"""
         try:
-            # Remove toolwindow attribute to show in taskbar again
-            self.root.wm_attributes("-toolwindow", False)
+            # Remove toolwindow attribute to show in taskbar again (Windows only)
+            if platform.system() == "Windows":
+                self.root.wm_attributes("-toolwindow", False)
             self.root.attributes("-alpha", 1)  # Make fully visible
             self.root.deiconify()
             self.root.lift()
