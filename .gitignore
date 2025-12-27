@@ -17,8 +17,7 @@ server/server_config.json
 server/data/*.db
 server/data/*.sqlite
 server/cloudflare/
-server/bore/
-server/backend/
+
 server/
 
 

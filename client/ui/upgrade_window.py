@@ -16,7 +16,7 @@ from core.config import (
     COLOR_PRIMARY,
     get_license_server_url,
 )
-from .theme import ModernButton, colors, FONTS
+from .theme import ModernButton, RoundedButton, colors, FONTS
 from .payment_window import PaymentWindow
 from feature_manager import get_feature_manager
 from .i18n import t
@@ -271,67 +271,88 @@ class UpgradeWindow:
             pass
 
     def _create_license_section(self, parent):
-        """Create modern license key input section"""
+        """Create refined license key input section"""
         license_outer = tk.Frame(parent, bg="#0d0d1a")
-        license_outer.pack(pady=(10, 20))
+        license_outer.pack(pady=(10, 20), fill="x")
 
-        # Card-like container
+        # Main container
+        container = tk.Frame(license_outer, bg="#0d0d1a")
+        container.pack(expand=True, fill="x")
+
+        # Card with modern styling
         license_card = tk.Frame(
-            license_outer,
+            container,
             bg="#1a1a2e",
-            highlightbackground="#3a3a5e",
+            highlightbackground="#2a2a4e",
             highlightthickness=1,
         )
-        license_card.pack(padx=20, pady=10, ipadx=30, ipady=20)
+        license_card.pack(padx=60, ipadx=20, ipady=15)
 
-        # Title with icon
+        # Content Container
+        content_frame = tk.Frame(license_card, bg="#1a1a2e")
+        content_frame.pack(padx=20)
+
+        # Instruction text only (Title removed)
         tk.Label(
-            license_card,
-            text="🔑 " + t("have_license_key"),
-            font=("Segoe UI", 14, "bold"),
+            content_frame,
+            text="Nhập license key để kích hoạt gói của bạn",
+            font=("Segoe UI", 10),
             bg="#1a1a2e",
-            fg="white",
-        ).pack(anchor="w", pady=(0, 15))
+            fg="#7a7a9e",
+            anchor="w",
+            justify="left",
+        ).pack(anchor="w", fill="x", pady=(0, 8))
 
-        # Input Row
-        input_row = tk.Frame(license_card, bg="#1a1a2e")
-        input_row.pack()
+        # Input row
+        input_row = tk.Frame(content_frame, bg="#1a1a2e")
+        input_row.pack(fill="x")
 
-        # Entry with rounded appearance
-        entry_frame = tk.Frame(
-            input_row, bg="#252540", highlightbackground="#3a3a5e", highlightthickness=2
+        # Entry with modern border - fixed height to match button
+        entry_height = 34
+
+        entry_wrapper = tk.Frame(
+            input_row,
+            bg="#2a2a4e",
+            highlightbackground="#3a3a5e",
+            highlightthickness=1,
+            height=entry_height,
+            width=280,  # Fixed width
         )
-        entry_frame.pack(side="left", padx=(0, 15))
+        entry_wrapper.pack(side="left", padx=(0, 15))
+        entry_wrapper.pack_propagate(False)
 
         self.license_entry = tk.Entry(
-            entry_frame,
-            font=("Segoe UI", 13),
-            bg="#252540",
-            fg="white",
-            insertbackground="white",
+            entry_wrapper,
+            font=("Consolas", 11),
+            bg="#2a2a4e",
+            fg="#e0e0e0",
+            insertbackground="#8a8ae0",
             bd=0,
             relief="flat",
-            width=35,
         )
-        self.license_entry.pack(padx=15, pady=10)
+        self.license_entry.pack(fill="both", expand=True, padx=10, pady=7)
         self.license_entry.bind("<Return>", lambda e: self._activate_license())
 
         # Focus effects
         def on_focus_in(e):
-            entry_frame.configure(highlightbackground="#4a9eff")
+            entry_wrapper.configure(highlightbackground="#4a9eff", bg="#2a2a5e")
 
         def on_focus_out(e):
-            entry_frame.configure(highlightbackground="#3a3a5e")
+            entry_wrapper.configure(highlightbackground="#3a3a5e", bg="#2a2a4e")
 
         self.license_entry.bind("<FocusIn>", on_focus_in)
         self.license_entry.bind("<FocusOut>", on_focus_out)
 
-        ModernButton(
+        # Activate button
+        RoundedButton(
             input_row,
-            text="✨ " + t("activate"),
+            text=t("activate"),
             command=self._activate_license,
             kind="accent",
-            width=14,
+            width=90,
+            height=entry_height,
+            radius=4,
+            canvas_bg="#1a1a2e",
         ).pack(side="left")
 
     def _activate_license(self):
@@ -402,21 +423,24 @@ class UpgradeWindow:
             for child in widget.winfo_children():
                 bind_children(child)
 
-        # Recommended Badge
+        # Fixed height badge container - ensures consistent card layout
+        badge_container = tk.Frame(card, bg="#1a1a2e", height=40)
+        badge_container.pack(fill="x", pady=(5, 0))
+        badge_container.pack_propagate(False)  # Prevent resizing
+
         if is_recommended:
-            badge_frame = tk.Frame(card, bg="#1a1a2e")
-            badge_frame.pack(pady=(10, 5))
-            tk.Label(
-                badge_frame,
+            badge_inner = tk.Frame(badge_container, bg="#1a1a2e")
+            badge_inner.pack(expand=True)
+            badge_label = tk.Label(
+                badge_inner,
                 text="⭐ RECOMMENDED",
                 bg=accent_color,
                 fg="black",
                 font=("Segoe UI", 9, "bold"),
-                padx=12,
-                pady=4,
-            ).pack()
-        else:
-            tk.Frame(card, bg="#1a1a2e", height=20).pack()
+                padx=14,
+                pady=5,
+            )
+            badge_label.pack()
 
         # Package Name
         tk.Label(

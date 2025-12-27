@@ -30,7 +30,7 @@
 |-----------|-------|
 | 🎯 **Macro Combo** | Tự động thực hiện combo theo kịch bản đã định sẵn |
 | 🎹 **Auto Đánh Đàn** | Chơi nhạc tự động từ file MIDI trong game |
-| ⚡ **Ping Optimizer** | Tối ưu kết nối mạng, giảm lag |
+<!-- | ⚡ **Ping Optimizer** | Tối ưu kết nối mạng, giảm lag | -->
 | 📋 **Quest Helper** | Hỗ trợ làm nhiệm vụ nhanh hơn |
 | 🔄 **Auto Update** | Tự động cập nhật phiên bản mới |
 

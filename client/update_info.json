@@ -1,8 +1,8 @@
 {
-    "version":  "0.0.2",
+    "version":  "0.0.3",
     "installer_url":  "/download/installer/file",
     "changelog":  "",
-    "release_date":  "2025-12-24",
-    "min_version":  "0.0.2",
+    "release_date":  "2025-12-27",
+    "min_version":  "0.0.3",
     "force_update":  true
 }

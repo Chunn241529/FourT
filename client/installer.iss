@@ -2,7 +2,7 @@
 ; Download Inno Setup from: https://jrsoftware.org/isdl.php
 
 #define MyAppName "FourT"
-#define MyAppVersion "0.0.2"
+#define MyAppVersion "0.0.3"
 #define MyAppPublisher "FourT Studio"
 #define MyAppURL "https://fourt.io.vn"
 #define MyAppExeName "FourT.exe"
@@ -83,6 +83,7 @@ begin
     // Any post-install tasks
   end;
 end;
+
 
 
 

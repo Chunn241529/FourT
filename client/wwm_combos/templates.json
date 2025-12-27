@@ -37,6 +37,25 @@
           "countdown": 11.0
         }
       ]
+    },
+    {
+      "name": "charge",
+      "items": [
+        {
+          "type": "skill",
+          "id": "charge_attack",
+          "name": "Charge Attack",
+          "key": "mouse5",
+          "color": "#95a5a6",
+          "hold": 1.5,
+          "click_count": 1,
+          "weapon": "common",
+          "modifiers": [],
+          "description": "",
+          "image": "rmbcharge.png",
+          "countdown": 0
+        }
+      ]
     }
   ]
 }

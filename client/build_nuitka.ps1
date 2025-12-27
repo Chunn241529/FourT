@@ -14,17 +14,11 @@ param(
 
 # ------------------------------------------------------------------
 # Activate venv if exists (important when running from Admin UI)
-# First try parent directory (FourT/.venv), then local (.venv)
-$parentVenvPath = Join-Path (Split-Path $PSScriptRoot -Parent) ".venv\Scripts\Activate.ps1"
-$localVenvPath = Join-Path $PSScriptRoot ".venv\Scripts\Activate.ps1"
-
-if (Test-Path $parentVenvPath) {
-    Write-Host "[0/5] Activating virtual environment from parent..." -ForegroundColor Yellow
-    . $parentVenvPath
-}
-elseif (Test-Path $localVenvPath) {
-    Write-Host "[0/5] Activating local virtual environment..." -ForegroundColor Yellow
-    . $localVenvPath
+# Venv is in the root directory (parent of client)
+$venvPath = Join-Path (Split-Path $PSScriptRoot -Parent) ".venv\Scripts\Activate.ps1"
+if (Test-Path $venvPath) {
+    Write-Host "[0/5] Activating virtual environment..." -ForegroundColor Yellow
+    . $venvPath
 }
 # ------------------------------------------------------------------
 
@@ -84,6 +78,9 @@ $nuitkaArgs = @(
     "--standalone",
     "--windows-console-mode=attach",
     "--enable-plugin=tk-inter",
+    # Tcl/Tk data files (fix init.tcl not found error)
+    "--include-data-dir=$env:LOCALAPPDATA\Programs\Python\Python311\tcl\tcl8.6=tcl/tcl8.6",
+    "--include-data-dir=$env:LOCALAPPDATA\Programs\Python\Python311\tcl\tk8.6=tcl/tk8.6",
     # Exclude heavy modules not needed for core functionality
     "--nofollow-import-to=torch",
     # MIDI processing modules
@@ -131,8 +128,6 @@ $nuitkaArgs = @(
     "--include-module=ui.video_overlay_window",
     "--include-module=ui.video_overlay_launcher",
     "--include-module=ui.ocr_setup_window",
-    # Screen Translator UI modules
-    # "--include-module=ui.screen_translator_window",
     # Services modules (offline-first)
     "--include-module=services.connection_manager",
     "--include-module=services.secure_license_cache",
@@ -148,20 +143,10 @@ $nuitkaArgs = @(
     "--include-module=services.wwm_combo_runtime",
     # Sync service
     "--include-module=services.sync_service",
-    # Screen Translator service
-    # "--include-module=services.translation_service",
     # Quest Video Helper dependencies
-    "--include-module=winocr",
-    # Windows Runtime modules for winocr
-    "--include-module=winrt",
-    "--include-module=winrt.windows",
-    "--include-module=winrt.windows.foundation",
-    "--include-module=winrt.windows.graphics",
-    "--include-module=winrt.windows.graphics.imaging",
-    "--include-module=winrt.windows.media",
-    "--include-module=winrt.windows.media.ocr",
-    "--include-module=winrt.windows.storage",
-    "--include-module=winrt.windows.storage.streams",
+    # winocr is a single .py file, need to copy it directly and include winrt packages
+    "--include-data-file=../.venv/Lib/site-packages/winocr.py=winocr.py",
+    "--include-package=winrt",
     # OCR dependencies (pytesseract downloaded at runtime, but PIL/numpy needed)
     "--include-module=PIL",
     "--include-module=PIL.Image",

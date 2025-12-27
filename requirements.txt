@@ -1,4 +1,4 @@
-pretty-midi>=0.2.10
+pretty-midi
 mido
 pygame
 numpy>=1.26.0
@@ -29,4 +29,3 @@ basic-pitch>=0.3.0
 yt-dlp
 winocr
 pystray
-qrcode
