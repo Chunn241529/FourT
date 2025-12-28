@@ -15,6 +15,7 @@ from core.macro_player import MacroPlayer
 from .theme import colors, FONTS, ModernButton
 from .modern_menu import ModernMenu
 from .i18n import t
+from .wwm_combo.countdown_overlay import CountdownOverlay, show_skill_countdown
 
 
 class MacroLibraryWindow(tk.Toplevel):
@@ -445,7 +446,13 @@ class MacroTimelineCanvas(tk.Canvas):
                 new_events.append(evt)
                 pending_delay = 0.0  # Consumed
 
-        # pending_delay at the end is discarded (or could be trailing wait)
+        # Handle trailing delay (delay at end of macro, before loop)
+        if pending_delay > 0:
+            # Add a special "delay_only" event that player will just sleep on
+            new_events.append(
+                {"type": "delay_only", "delay": pending_delay, "data": {}}
+            )
+
         return new_events
 
     def redraw(self):
@@ -844,6 +851,21 @@ class MacroRecorderFrame(tk.Frame):
         self.is_setting_trigger = False
         self.editing_item_id = None
 
+        # Modifier key tracking for combo triggers
+        self.pressed_modifiers: set = set()
+        self.MODIFIER_KEYS = {
+            keyboard.Key.ctrl,
+            keyboard.Key.ctrl_l,
+            keyboard.Key.ctrl_r,
+            keyboard.Key.shift,
+            keyboard.Key.shift_l,
+            keyboard.Key.shift_r,
+            keyboard.Key.alt,
+            keyboard.Key.alt_l,
+            keyboard.Key.alt_r,
+            keyboard.Key.alt_gr,
+        }
+
         # Multi-scenario support
         self.active_macros = {}  # {trigger_key_code: macro_data}
         self.active_macros_list = []  # List of (name, trigger_code) for UI display
@@ -1042,9 +1064,32 @@ class MacroRecorderFrame(tk.Frame):
         self.mouse_listener = mouse.Listener(on_click=self.on_global_click)
         self.mouse_listener.start()
 
+    def _normalize_modifier(self, key) -> str:
+        """Normalize modifier key to standard name"""
+        if key in (keyboard.Key.ctrl, keyboard.Key.ctrl_l, keyboard.Key.ctrl_r):
+            return "ctrl"
+        if key in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r):
+            return "shift"
+        if key in (
+            keyboard.Key.alt,
+            keyboard.Key.alt_l,
+            keyboard.Key.alt_r,
+            keyboard.Key.alt_gr,
+        ):
+            return "alt"
+        return str(key)
+
     def on_global_press(self, key):
+        # Track modifier state
+        if key in self.MODIFIER_KEYS:
+            self.pressed_modifiers.add(self._normalize_modifier(key))
+            # Don't set trigger on modifier-only press
+            if self.is_setting_trigger:
+                return
+
         if self.is_setting_trigger:
-            self.set_trigger_key(key)
+            if key not in self.MODIFIER_KEYS:
+                self.set_trigger_key(key)
             return
 
         if self.is_waiting_for_key:
@@ -1058,6 +1103,9 @@ class MacroRecorderFrame(tk.Frame):
         self.check_trigger_press(key)
 
     def on_global_release(self, key):
+        # Clear modifier state
+        if key in self.MODIFIER_KEYS:
+            self.pressed_modifiers.discard(self._normalize_modifier(key))
         self.check_trigger_release(key)
 
     def on_global_click(self, x, y, button, pressed):
@@ -1071,11 +1119,27 @@ class MacroRecorderFrame(tk.Frame):
         else:
             self.check_trigger_release(button)
 
+    def _matches_trigger(self, key_or_button, trigger) -> bool:
+        """Check if key/button matches the trigger (with modifiers)"""
+        if isinstance(trigger, tuple):
+            required_mods, main_key = trigger
+            # Check main key matches AND all required modifiers are pressed
+            key_matches = self._keys_equal(key_or_button, main_key)
+            mods_match = required_mods == frozenset(self.pressed_modifiers)
+            return key_matches and mods_match
+        return self._keys_equal(key_or_button, trigger)
+
+    def _keys_equal(self, key1, key2) -> bool:
+        """Compare two keys for equality"""
+        if key1 == key2:
+            return True
+        return str(key1) == str(key2)
+
     def check_trigger_press(self, key_or_button):
         try:
             if not self.recorder.running:
                 # 1. Check current editing macro trigger
-                if key_or_button == self.trigger_key_code:
+                if self._matches_trigger(key_or_button, self.trigger_key_code):
                     # Skip if no macro loaded (don't show annoying warning)
                     if not self.current_macro:
                         return
@@ -1093,8 +1157,12 @@ class MacroRecorderFrame(tk.Frame):
 
                 # 2. Check active macros
                 for trigger_code, macro_data in self.active_macros.items():
-                    if key_or_button == trigger_code:
-                        self.play_active_macro(macro_data)
+                    if self._matches_trigger(key_or_button, trigger_code):
+                        # Toggle: stop if running, play if not
+                        if self.player.running:
+                            self.after(0, self.stop_playback)
+                        else:
+                            self.play_active_macro(macro_data)
                         return
 
         except Exception as e:
@@ -1103,14 +1171,14 @@ class MacroRecorderFrame(tk.Frame):
     def check_trigger_release(self, key_or_button):
         try:
             # 1. Check current macro
-            if key_or_button == self.trigger_key_code:
+            if self._matches_trigger(key_or_button, self.trigger_key_code):
                 mode = self.playback_mode_var.get()
                 if mode == "hold" and self.player.running:
                     self.after(0, self.stop_playback)
 
             # 2. Check active macros (for hold mode)
             for trigger_code, macro_data in self.active_macros.items():
-                if key_or_button == trigger_code:
+                if self._matches_trigger(key_or_button, trigger_code):
                     settings = macro_data.get("settings", {})
                     if settings.get("mode") == "hold" and self.player.running:
                         self.after(0, self.stop_playback)
@@ -1135,7 +1203,7 @@ class MacroRecorderFrame(tk.Frame):
             "Enter delay (seconds):",
             initialvalue=0.3,
             minvalue=0.01,
-            maxvalue=10.0,
+            maxvalue=3600.0,
             parent=self,
         )
         if delay:
@@ -1176,14 +1244,25 @@ class MacroRecorderFrame(tk.Frame):
 
     def start_set_trigger(self):
         self.is_setting_trigger = True
+        self.pressed_modifiers.clear()
         self.btn_trigger.configure(text="Press Key/Btn...", kind="primary")
         self.status_var.set("Press any key or mouse button to set as Trigger...")
 
     def set_trigger_key(self, key_or_button):
         try:
-            name = self.get_key_name(key_or_button)
+            modifiers = frozenset(self.pressed_modifiers)
+            if modifiers:
+                # Store as tuple: (frozenset of modifiers, main key)
+                self.trigger_key_code = (modifiers, key_or_button)
+                mod_names = [m.upper() for m in sorted(modifiers)]
+                key_name = self._get_single_key_name(key_or_button)
+                name = "+".join(mod_names + [key_name])
+            else:
+                self.trigger_key_code = key_or_button
+                name = self._get_single_key_name(key_or_button)
+
             self.trigger_key_var.set(name)
-            self.trigger_key_code = key_or_button
+            self.pressed_modifiers.clear()
 
             self.after(
                 0, lambda: self.btn_trigger.configure(text=name, kind="secondary")
@@ -1225,10 +1304,19 @@ class MacroRecorderFrame(tk.Frame):
             self.current_macro[idx]["delay"] = new_delay
             self.refresh_list()
 
-    def get_key_name(self, key):
+    def get_key_name(self, trigger):
+        """Get display name for key/button (supports combo triggers)"""
+        if isinstance(trigger, tuple):
+            modifiers, main_key = trigger
+            mod_names = [m.upper() for m in sorted(modifiers)]
+            key_name = self._get_single_key_name(main_key)
+            return "+".join(mod_names + [key_name])
+        return self._get_single_key_name(trigger)
+
+    def _get_single_key_name(self, key):
+        """Get display name for a single key/button"""
         if isinstance(key, mouse.Button):
             return str(key)
-
         if hasattr(key, "name"):
             return key.name.upper()
         elif hasattr(key, "char"):
@@ -1236,25 +1324,40 @@ class MacroRecorderFrame(tk.Frame):
         return str(key)
 
     def parse_trigger_string(self, trigger_str):
-        """Parse trigger string back to key/button object"""
+        """Parse trigger string back to key/button object (supports combo format)"""
+        try:
+            # Handle combo format: "CTRL+K", "SHIFT+ALT+Button.x1"
+            if "+" in trigger_str:
+                parts = trigger_str.split("+")
+                modifiers = frozenset(p.lower() for p in parts[:-1])
+                main_key = self._parse_single_key(parts[-1])
+                return (modifiers, main_key)
+
+            return self._parse_single_key(trigger_str)
+        except Exception as e:
+            print(f"Error parsing trigger '{trigger_str}': {e}")
+            return mouse.Button.x1
+
+    def _parse_single_key(self, key_str):
+        """Parse a single key string to key/button object"""
         try:
             # Mouse button format: "Button.x1", "Button.left", etc.
-            if trigger_str.startswith("Button."):
-                button_name = trigger_str.split(".")[-1]
+            if key_str.startswith("Button."):
+                button_name = key_str.split(".")[-1]
                 return getattr(mouse.Button, button_name, mouse.Button.x1)
 
             # Keyboard Key format: "F9", "ENTER", etc.
-            if hasattr(keyboard.Key, trigger_str.lower()):
-                return getattr(keyboard.Key, trigger_str.lower())
+            key_lower = key_str.lower()
+            if hasattr(keyboard.Key, key_lower):
+                return getattr(keyboard.Key, key_lower)
 
             # Single character
-            if len(trigger_str) == 1:
-                return trigger_str.lower()
+            if len(key_str) == 1:
+                return key_str.lower()
 
             # Default fallback
             return mouse.Button.x1
-        except Exception as e:
-            print(f"Error parsing trigger '{trigger_str}': {e}")
+        except Exception:
             return mouse.Button.x1
 
     def toggle_record(self):
@@ -1348,15 +1451,56 @@ class MacroRecorderFrame(tk.Frame):
             loop_count = 0  # Infinite loop while held
 
         self.player.play(
-            self.current_macro, self.on_play_finished, loop_count=loop_count
+            self.current_macro,
+            self.on_play_finished,
+            loop_count=loop_count,
+            on_delay_start=self._show_delay_countdown,
         )
 
+    def _show_delay_countdown(self, delay_seconds):
+        """Show countdown overlay for delay"""
+        try:
+            root = self.winfo_toplevel()
+            # Use wwm_combo's countdown overlay with "Delay" label
+            show_skill_countdown(root, "Delay", "", delay_seconds)
+        except Exception as e:
+            print(f"[MacroWindow] Countdown overlay error: {e}")
+
     def on_play_finished(self):
-        # Show UI again after playback finishes
-        self.winfo_toplevel().deiconify()
-        self.winfo_toplevel().lift()
+        # Keep UI hidden after playback - user can manually show if needed
         self.status_var.set("Playback finished")
         self.btn_play.configure(text="▶ Play (Trigger)")
+
+    def play_active_macro(self, macro_data):
+        """Play a macro from the active list (background mode - no UI changes)"""
+        events = macro_data.get("events", [])
+        if not events:
+            return
+
+        settings = macro_data.get("settings", {})
+        mode = settings.get("mode", "once")
+
+        # Determine loop count
+        if mode == "loop":
+            from feature_manager import get_feature_manager
+
+            fm = get_feature_manager()
+            if fm.get_feature_limit("macro_infinite_loop"):
+                loop_count = 0  # Infinite
+            else:
+                loop_count = 10  # Limited loop for non-premium
+        elif mode == "hold":
+            loop_count = 0  # Infinite while held
+        else:
+            loop_count = 1
+
+        # Play without UI callback (background mode)
+        self.player.play(
+            events,
+            on_finish=None,
+            loop_count=loop_count,
+            on_delay_start=self._show_delay_countdown,
+        )
 
     def refresh_list(self):
         self.timeline.set_events(self.current_macro)

@@ -128,6 +128,9 @@ $nuitkaArgs = @(
     "--include-module=ui.video_overlay_window",
     "--include-module=ui.video_overlay_launcher",
     "--include-module=ui.ocr_setup_window",
+    # Screen Translator UI
+    "--include-module=ui.screen_translator_window",
+    "--include-module=services.translation_service",
     # Services modules (offline-first)
     "--include-module=services.connection_manager",
     "--include-module=services.secure_license_cache",

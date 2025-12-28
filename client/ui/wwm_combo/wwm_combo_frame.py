@@ -1604,7 +1604,7 @@ class WWMComboFrame(tk.Frame):
             "Enter delay (seconds):",
             initialvalue=0.3,
             minvalue=0.01,
-            maxvalue=10.0,
+            maxvalue=3600.0,
             parent=self,
         )
         if delay:
@@ -1630,7 +1630,7 @@ class WWMComboFrame(tk.Frame):
                 "Enter delay (seconds):",
                 initialvalue=current,
                 minvalue=0.01,
-                maxvalue=10.0,
+                maxvalue=3600.0,
                 parent=self,
             )
             if new_val:
@@ -1686,27 +1686,73 @@ class WWMComboFrame(tk.Frame):
 
     def _on_trigger_press(self, key_or_button):
         """Callback when trigger pressed"""
-        combo_data = self.combo_manager.get_active(key_or_button)
-        if combo_data:
-            mode = combo_data["settings"]["mode"]
-            if mode == "hold":
-                if not self.player.running:
-                    self.after(0, lambda: self._play_combo(combo_data))
-            else:
-                if self.player.running:
-                    self.after(0, self.player.stop)
+        # Check if this key matches current trigger (with modifiers)
+        if self.trigger_manager.matches_trigger(key_or_button):
+            # Get combo using the full trigger code (may be tuple for combo triggers)
+            combo_data = self.combo_manager.get_active(
+                self.trigger_manager.trigger_key_code
+            )
+            if combo_data:
+                mode = combo_data["settings"]["mode"]
+                if mode == "hold":
+                    if not self.player.running:
+                        self.after(0, lambda: self._play_combo(combo_data))
                 else:
-                    self.after(0, lambda: self._play_combo(combo_data))
+                    if self.player.running:
+                        self.after(0, self.player.stop)
+                    else:
+                        self.after(0, lambda: self._play_combo(combo_data))
+                return
+
+        # Also check all active combos
+        for trigger_code, combo_data in self.active_combos.items():
+            if self._matches_active_trigger(key_or_button, trigger_code):
+                mode = combo_data["settings"]["mode"]
+                if mode == "hold":
+                    if not self.player.running:
+                        self.after(0, lambda cd=combo_data: self._play_combo(cd))
+                else:
+                    if self.player.running:
+                        self.after(0, self.player.stop)
+                    else:
+                        self.after(0, lambda cd=combo_data: self._play_combo(cd))
+                return
+
+    def _matches_active_trigger(self, key_or_button, trigger_code) -> bool:
+        """Check if key matches an active combo trigger (with modifiers)"""
+        if isinstance(trigger_code, tuple) and len(trigger_code) == 2:
+            required_mods, main_key = trigger_code
+            if isinstance(required_mods, frozenset):
+                key_matches = (
+                    str(key_or_button) == str(main_key) or key_or_button == main_key
+                )
+                mods_match = required_mods == frozenset(
+                    self.trigger_manager.pressed_modifiers
+                )
+                return key_matches and mods_match
+        return str(key_or_button) == str(trigger_code) or key_or_button == trigger_code
 
     def _on_trigger_release(self, key_or_button):
         """Callback when trigger released"""
-        combo_data = self.combo_manager.get_active(key_or_button)
-        if (
-            combo_data
-            and combo_data["settings"]["mode"] == "hold"
-            and self.player.running
-        ):
-            self.after(0, self.player.stop)
+        # Check current trigger
+        if self.trigger_manager.matches_trigger(key_or_button):
+            combo_data = self.combo_manager.get_active(
+                self.trigger_manager.trigger_key_code
+            )
+            if (
+                combo_data
+                and combo_data["settings"]["mode"] == "hold"
+                and self.player.running
+            ):
+                self.after(0, self.player.stop)
+                return
+
+        # Check active combos
+        for trigger_code, combo_data in self.active_combos.items():
+            if self._matches_active_trigger(key_or_button, trigger_code):
+                if combo_data["settings"]["mode"] == "hold" and self.player.running:
+                    self.after(0, self.player.stop)
+                    return
 
     def test_combo(self):
         """Test play combo"""

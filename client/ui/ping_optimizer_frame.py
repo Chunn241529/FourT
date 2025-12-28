@@ -1,645 +1,349 @@
 """
 Ping Optimizer Frame
-Modern UI for network optimization with animated ping display
+Dashboard UI with Before/After comparison and Status
 """
 
 import tkinter as tk
-from tkinter import Canvas, messagebox
+from tkinter import Canvas
 import math
-import time
 from typing import Optional, Callable
 
-from .theme import COLORS, FONTS, ModernButton, GradientCard
-from .animations import (
-    FadeEffect,
-    ColorTransition,
-    hex_to_rgb,
-    rgb_to_hex,
-    interpolate_color,
-    draw_rounded_rect,
-)
+from .theme import COLORS, FONTS, ModernButton
+from .animations import draw_rounded_rect, interpolate_color
 from .i18n import t
 
 
-class AnimatedPingDisplay(Canvas):
-    """
-    Large animated ping display with:
-    - Count-up animation
-    - Color transition based on quality
-    - Glow/pulse effect while measuring
-    """
-
-    def __init__(self, parent, width=280, height=200, **kwargs):
-        super().__init__(
-            parent,
-            width=width,
-            height=height,
-            bg=COLORS["bg"],
-            highlightthickness=0,
-            **kwargs,
-        )
-
-        self.display_width = width
-        self.display_height = height
-        self._current_ping = 0
-        self._target_ping = 0
-        self._animation_id = None
-        self._pulse_id = None
-        self._pulse_phase = 0
-        self._is_measuring = False
-        self._quality_color = COLORS["success"]
-
-        self._draw_display()
-
-    def _draw_display(self):
-        """Draw the ping display"""
-        self.delete("all")
-
-        cx = self.display_width / 2
-        cy = self.display_height / 2 - 10
-
-        # Background card
-        draw_rounded_rect(
-            self,
-            10,
-            10,
-            self.display_width - 10,
-            self.display_height - 10,
-            radius=16,
-            fill=COLORS["card"],
-            outline=COLORS["border"],
-        )
-
-        # Glow effect (when measuring)
-        if self._is_measuring:
-            glow_alpha = 0.3 + 0.2 * math.sin(self._pulse_phase)
-            glow_color = interpolate_color(
-                COLORS["card"], self._quality_color, glow_alpha
-            )
-            draw_rounded_rect(
-                self,
-                15,
-                15,
-                self.display_width - 15,
-                self.display_height - 15,
-                radius=14,
-                fill=glow_color,
-                outline="",
-            )
-
-        # Ping number (large)
-        ping_text = f"{int(self._current_ping)}"
-        self.create_text(
-            cx,
-            cy,
-            text=ping_text,
-            font=("Segoe UI", 56, "bold"),
-            fill=self._quality_color,
-            tags="ping_value",
-        )
-
-        # "ms" unit
-        self.create_text(
-            cx + 70,
-            cy + 10,
-            text="ms",
-            font=("Segoe UI", 18),
-            fill=COLORS["fg_dim"],
-            tags="ping_unit",
-        )
-
-        # Quality indicator bar
-        bar_y = cy + 50
-        bar_width = 180
-        bar_height = 6
-        bar_x1 = (self.display_width - bar_width) / 2
-        bar_x2 = bar_x1 + bar_width
-
-        # Background bar
-        draw_rounded_rect(
-            self,
-            bar_x1,
-            bar_y,
-            bar_x2,
-            bar_y + bar_height,
-            radius=3,
-            fill=COLORS["input_bg"],
-            outline="",
-        )
-
-        # Fill bar (based on ping quality - inversely proportional)
-        fill_ratio = max(0, min(1, 1 - (self._current_ping / 200)))
-        fill_width = bar_width * fill_ratio
-        if fill_width > 0:
-            draw_rounded_rect(
-                self,
-                bar_x1,
-                bar_y,
-                bar_x1 + fill_width,
-                bar_y + bar_height,
-                radius=3,
-                fill=self._quality_color,
-                outline="",
-            )
-
-        # Quality label
-        quality_label = self._get_quality_label()
-        self.create_text(
-            cx,
-            bar_y + 20,
-            text=quality_label,
-            font=("Segoe UI", 10),
-            fill=COLORS["fg_dim"],
-            tags="quality_label",
-        )
-
-    def _get_quality_label(self) -> str:
-        """Get quality label based on ping"""
-        ping = self._current_ping
-        if ping < 30:
-            return t("excellent")
-        elif ping < 60:
-            return t("good")
-        elif ping < 100:
-            return t("average")
-        elif ping < 150:
-            return t("poor")
-        else:
-            return t("very_poor")
-
-    def _get_quality_color(self, ping: float) -> str:
-        """Get color based on ping value"""
-        if ping < 30:
-            return "#00d9a0"  # Teal
-        elif ping < 60:
-            return "#a6e3a1"  # Green
-        elif ping < 100:
-            return "#f9e2af"  # Yellow
-        elif ping < 150:
-            return "#fab387"  # Orange
-        else:
-            return "#f38ba8"  # Red
-
-    def set_ping(self, value: float, animate: bool = True):
-        """Set ping value with optional animation"""
-        self._target_ping = value
-        self._quality_color = self._get_quality_color(value)
-
-        if animate and abs(self._current_ping - value) > 1:
-            self._animate_to_value()
-        else:
-            self._current_ping = value
-            self._draw_display()
-
-    def _animate_to_value(self):
-        """Animate ping counter to target value"""
-        if self._animation_id:
-            self.after_cancel(self._animation_id)
-
-        def step():
-            diff = self._target_ping - self._current_ping
-
-            if abs(diff) < 1:
-                self._current_ping = self._target_ping
-                self._draw_display()
-                return
-
-            # Ease out
-            step_size = diff * 0.15
-            if abs(step_size) < 0.5:
-                step_size = 0.5 if diff > 0 else -0.5
-
-            self._current_ping += step_size
-            self._draw_display()
-
-            self._animation_id = self.after(30, step)
-
-        step()
-
-    def start_measuring(self):
-        """Start pulse animation for measuring state"""
-        self._is_measuring = True
-        self._pulse_phase = 0
-        self._run_pulse()
-
-    def stop_measuring(self):
-        """Stop measuring animation"""
-        self._is_measuring = False
-        if self._pulse_id:
-            self.after_cancel(self._pulse_id)
-            self._pulse_id = None
-        self._draw_display()
-
-    def _run_pulse(self):
-        """Run pulse animation frame"""
-        if not self._is_measuring:
-            return
-
-        self._pulse_phase += 0.15
-        self._draw_display()
-
-        self._pulse_id = self.after(50, self._run_pulse)
-
-
-class AnimatedActionButton(Canvas):
-    """
-    Action button with special click animation:
-    - Ripple effect on click
-    - Icon spin animation
-    - Success pulse when complete
-    """
-
-    def __init__(
-        self,
-        parent,
-        text: str,
-        icon: str,
-        command: Optional[Callable] = None,
-        width=100,
-        height=70,
-        **kwargs,
-    ):
-        super().__init__(
-            parent,
-            width=width,
-            height=height,
-            bg=COLORS["bg"],
-            highlightthickness=0,
-            **kwargs,
-        )
-
-        self.btn_width = width
-        self.btn_height = height
-        self.text = text
-        self.icon = icon
-        self.command = command
-
-        self._is_hovered = False
-        self._is_animating = False
-        self._animation_phase = 0
-        self._ripple_radius = 0
-        self._animation_id = None
-        self._spin_angle = 0
-
-        self._draw_button()
-
-        # Bindings
-        self.bind("<Enter>", self._on_enter)
-        self.bind("<Leave>", self._on_leave)
-        self.bind("<Button-1>", self._on_click)
-
-    def _draw_button(self):
-        """Draw the button"""
-        self.delete("all")
-
-        w, h = self.btn_width, self.btn_height
-        cx, cy = w / 2, h / 2
-
-        # Background - check for success flash first
-        if getattr(self, "_success_flash", False):
-            bg_color = COLORS["success"]
-            outline_color = COLORS["success"]
-        elif self._is_hovered:
-            bg_color = COLORS["card_hover"]
-            outline_color = COLORS["accent"]
-        else:
-            bg_color = COLORS["card"]
-            outline_color = COLORS["border"]
-
-        draw_rounded_rect(
-            self, 4, 4, w - 4, h - 4, radius=12, fill=bg_color, outline=outline_color
-        )
-
-        # Ripple effect (when animating)
-        if self._is_animating and self._ripple_radius > 0:
-            alpha = max(0, 1 - (self._ripple_radius / (w / 2)))
-            ripple_color = interpolate_color(bg_color, COLORS["accent"], alpha * 0.5)
-            self.create_oval(
-                cx - self._ripple_radius,
-                cy - self._ripple_radius,
-                cx + self._ripple_radius,
-                cy + self._ripple_radius,
-                fill=ripple_color,
-                outline="",
-            )
-
-        # Icon (with rotation if spinning)
-        icon_y = cy - 8
-        self.create_text(
-            cx,
-            icon_y,
-            text=self.icon,
-            font=("Segoe UI Emoji", 20),
-            fill=COLORS["accent"] if self._is_hovered else COLORS["fg"],
-            tags="icon",
-        )
-
-        # Text
-        self.create_text(
-            cx,
-            h - 16,
-            text=self.text,
-            font=("Segoe UI", 9),
-            fill=COLORS["fg"] if not self._is_hovered else "white",
-            tags="text",
-        )
-
-        self.config(cursor="hand2")
-
-    def _on_enter(self, event):
-        self._is_hovered = True
-        self._draw_button()
-
-    def _on_leave(self, event):
-        self._is_hovered = False
-        self._draw_button()
-
-    def _on_click(self, event):
-        """Handle click with animation"""
-        if self._is_animating:
-            return
-
-        self._is_animating = True
-        self._ripple_radius = 0
-        self._animation_phase = 0
-
-        self._run_click_animation()
-
-    def _run_click_animation(self):
-        """Run the click animation sequence"""
-        # Phase 0-10: Ripple expansion
-        if self._animation_phase < 10:
-            self._ripple_radius = (self._animation_phase / 10) * (self.btn_width / 2)
-            self._animation_phase += 1
-            self._draw_button()
-            self._animation_id = self.after(40, self._run_click_animation)
-
-        # Phase 10: Execute command
-        elif self._animation_phase == 10:
-            self._animation_phase += 1
-            if self.command:
-                self.command()
-            self._animation_id = self.after(200, self._run_click_animation)
-
-        # Phase 11-15: Fade out ripple
-        elif self._animation_phase < 15:
-            self._ripple_radius = (1 - (self._animation_phase - 10) / 5) * (
-                self.btn_width / 2
-            )
-            self._animation_phase += 1
-            self._draw_button()
-            self._animation_id = self.after(50, self._run_click_animation)
-
-        # Done
-        else:
-            self._is_animating = False
-            self._ripple_radius = 0
-            self._draw_button()
-
-    def show_success(self):
-        """Flash success state by redrawing with success color"""
-        self._success_flash = True
-        self._draw_button()
-
-        # Reset after delay
-        def reset():
-            self._success_flash = False
-            self._draw_button()
-
-        self.after(300, reset)
-
-
 class PingOptimizerFrame(tk.Frame):
-    """Main Ping Optimizer UI"""
+    """Ping Optimizer Dashboard UI"""
 
     def __init__(self, parent, **kwargs):
         super().__init__(parent, bg=COLORS["bg"], **kwargs)
 
-        # Import service
-        from services.ping_optimizer_service import (
-            get_ping_optimizer,
-            DNS_SERVERS,
-            get_quality_color,
-            get_quality_label,
-        )
+        from services.ping_optimizer_service import get_ping_optimizer
 
         self.optimizer = get_ping_optimizer()
-        self.dns_servers = DNS_SERVERS
-
-        self._status_text = ""
+        self._keep_running_on_close = True
 
         self._create_ui()
+        self.after(500, self._initial_ping)
 
-        # Initial ping measurement
-        self.after(500, self._measure_ping)
+        self.bind("<Destroy>", self._on_destroy)
+
+    def _on_destroy(self, event):
+        if event.widget != self:
+            return
+        if not self._keep_running_on_close:
+            self.optimizer.stop_realtime_monitor()
 
     def _create_ui(self):
-        """Create the UI components"""
-        # Ping Display (centered)
-        display_container = tk.Frame(self, bg=COLORS["bg"])
-        display_container.pack(fill="x", pady=(15, 15))
-        self.ping_display = AnimatedPingDisplay(
-            display_container, width=320, height=200
+        """Create Dashboard UI with hidden scroll"""
+
+        # =========== SCROLLABLE CONTAINER ===========
+        # Canvas for scrolling
+        self.canvas = tk.Canvas(self, bg=COLORS["bg"], highlightthickness=0)
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # Scrollbar (hidden)
+        self.scrollbar = tk.Scrollbar(
+            self, orient="vertical", command=self.canvas.yview
         )
-        self.ping_display.pack(anchor="center")
+        # Don't pack scrollbar - keep it hidden
 
-        # Action Buttons Row (centered)
-        btn_frame = tk.Frame(self, bg=COLORS["bg"])
-        btn_frame.pack(pady=(0, 15))
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
-        # Center the buttons using grid
-        btn_container = tk.Frame(btn_frame, bg=COLORS["bg"])
-        btn_container.pack(anchor="center")
-
-        self.optimize_btn = AnimatedActionButton(
-            btn_container,
-            text="Optimize",
-            icon="⚡",
-            command=self._optimize_network,
-            width=85,
-            height=70,
+        # Content frame inside canvas
+        self.content_frame = tk.Frame(self.canvas, bg=COLORS["bg"])
+        self.canvas_window = self.canvas.create_window(
+            (0, 0), window=self.content_frame, anchor="nw"
         )
-        self.optimize_btn.pack(side="left", padx=4)
 
-        self.flush_btn = AnimatedActionButton(
-            btn_container,
-            text="Flush DNS",
-            icon="🔄",
-            command=self._flush_network,
-            width=85,
-            height=70,
+        # Bind resize and scroll events
+        self.content_frame.bind("<Configure>", self._on_content_configure)
+        self.canvas.bind("<Configure>", self._on_canvas_configure)
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
+        # =========== BEFORE/AFTER CARD ===========
+        comparison_frame = tk.Frame(
+            self.content_frame, bg=COLORS["card"], padx=15, pady=12
         )
-        self.flush_btn.pack(side="left", padx=4)
+        comparison_frame.pack(fill="x", padx=20, pady=(15, 10))
 
-        self.dns_btn = AnimatedActionButton(
-            btn_container,
-            text="Best DNS",
-            icon="🌐",
-            command=self._find_best_dns,
-            width=95,
-            height=70,
-        )
-        self.dns_btn.pack(side="left", padx=5)
+        # Title
+        tk.Label(
+            comparison_frame,
+            text="📊 PING COMPARISON",
+            font=("Segoe UI", 10, "bold"),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+        ).pack(anchor="w")
 
-        # DNS Selection (centered)
-        dns_outer = tk.Frame(self, bg=COLORS["bg"])
-        dns_outer.pack(fill="x", pady=(10, 15))
+        # Before/After row
+        compare_row = tk.Frame(comparison_frame, bg=COLORS["card"])
+        compare_row.pack(fill="x", pady=(10, 5))
 
-        dns_frame = tk.Frame(dns_outer, bg=COLORS["bg"])
-        dns_frame.pack(anchor="center")
+        # Before
+        before_frame = tk.Frame(compare_row, bg=COLORS["card"])
+        before_frame.pack(side="left", expand=True)
 
         tk.Label(
-            dns_frame,
-            text="DNS Server:",
-            font=FONTS["body"],
-            bg=COLORS["bg"],
+            before_frame,
+            text="Trước",
+            font=("Segoe UI", 9),
+            bg=COLORS["card"],
             fg=COLORS["fg_dim"],
-        ).pack(side="left")
+        ).pack()
 
-        self.dns_var = tk.StringVar(value="cloudflare")
-
-        dns_options = [f"{dns.icon} {dns.name}" for dns in self.dns_servers.values()]
-        self.dns_menu = tk.OptionMenu(
-            dns_frame,
-            self.dns_var,
-            *self.dns_servers.keys(),
+        self.before_label = tk.Label(
+            before_frame,
+            text="--",
+            font=("Segoe UI", 28, "bold"),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
         )
-        self.dns_menu.config(
-            bg=COLORS["input_bg"],
-            fg=COLORS["fg"],
-            activebackground=COLORS["accent"],
+        self.before_label.pack()
+
+        tk.Label(
+            before_frame,
+            text="ms",
+            font=("Segoe UI", 9),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+        ).pack()
+
+        # Arrow
+        tk.Label(
+            compare_row,
+            text="→",
+            font=("Segoe UI", 24),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+        ).pack(side="left", padx=15)
+
+        # After
+        after_frame = tk.Frame(compare_row, bg=COLORS["card"])
+        after_frame.pack(side="left", expand=True)
+
+        tk.Label(
+            after_frame,
+            text="Sau",
+            font=("Segoe UI", 9),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+        ).pack()
+
+        self.after_label = tk.Label(
+            after_frame,
+            text="--",
+            font=("Segoe UI", 28, "bold"),
+            bg=COLORS["card"],
+            fg="#00d9a0",  # Green
+        )
+        self.after_label.pack()
+
+        tk.Label(
+            after_frame,
+            text="ms",
+            font=("Segoe UI", 9),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+        ).pack()
+
+        # Improvement
+        self.improvement_label = tk.Label(
+            comparison_frame,
+            text="",
+            font=("Segoe UI", 11, "bold"),
+            bg=COLORS["card"],
+            fg="#00d9a0",
+        )
+        self.improvement_label.pack(pady=(5, 0))
+
+        # =========== STATUS CARD ===========
+        status_frame = tk.Frame(self.content_frame, bg=COLORS["card"], padx=15, pady=12)
+        status_frame.pack(fill="x", padx=20, pady=(5, 10))
+
+        tk.Label(
+            status_frame,
+            text="⚙️ OPTIMIZATION STATUS",
+            font=("Segoe UI", 10, "bold"),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+        ).pack(anchor="w")
+
+        # Status items
+        self.status_dns = tk.Label(
+            status_frame,
+            text="○ DNS: Chưa tối ưu",
+            font=("Segoe UI", 10),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+            anchor="w",
+        )
+        self.status_dns.pack(fill="x", pady=(8, 2))
+
+        self.status_tcp = tk.Label(
+            status_frame,
+            text="○ TCP Throttling: Chưa tối ưu",
+            font=("Segoe UI", 10),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+            anchor="w",
+        )
+        self.status_tcp.pack(fill="x", pady=2)
+
+        self.status_cache = tk.Label(
+            status_frame,
+            text="○ DNS Cache: Chưa flush",
+            font=("Segoe UI", 10),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+            anchor="w",
+        )
+        self.status_cache.pack(fill="x", pady=2)
+
+        # =========== BOOST BUTTON ===========
+        boost_frame = tk.Frame(self.content_frame, bg=COLORS["bg"])
+        boost_frame.pack(fill="x", padx=20, pady=(10, 5))
+
+        self.boost_btn = tk.Button(
+            boost_frame,
+            text="⚡ BOOST NETWORK",
+            font=("Segoe UI", 14, "bold"),
+            bg="#8b5cf6",
+            fg="white",
+            activebackground="#7c3aed",
             activeforeground="white",
-            highlightthickness=0,
-            bd=0,
-            font=FONTS["body"],
-            width=15,
+            relief="flat",
+            cursor="hand2",
+            command=self._one_click_boost,
         )
-        self.dns_menu["menu"].config(
-            bg=COLORS["input_bg"],
-            fg=COLORS["fg"],
-            activebackground=COLORS["accent"],
-            activeforeground="white",
-            font=FONTS["body"],
+        self.boost_btn.pack(fill="x", ipady=12)
+
+        # Progress label
+        self.boost_progress = tk.Label(
+            boost_frame,
+            text="",
+            font=("Segoe UI", 9),
+            bg=COLORS["bg"],
+            fg=COLORS["accent"],
         )
-        self.dns_menu.pack(side="left", padx=10)
+        self.boost_progress.pack(pady=(5, 0))
 
-        apply_dns_btn = ModernButton(
-            dns_frame, text="Apply", command=self._apply_dns, kind="secondary"
-        )
-        apply_dns_btn.pack(side="left")
+        # =========== QUOTE PANEL ===========
+        quote_frame = tk.Frame(self.content_frame, bg=COLORS["card"], padx=15, pady=12)
+        quote_frame.pack(fill="x", padx=20, pady=(10, 15))
 
-    def _set_status(self, text: str, color: str = None):
-        """Update status text (hidden - no log display)"""
-        pass  # Status display removed per user request
+        tk.Label(
+            quote_frame,
+            text="💡 CÁCH HOẠT ĐỘNG",
+            font=("Segoe UI", 10, "bold"),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+        ).pack(anchor="w")
 
-    def _measure_ping(self):
-        """Measure ping to default target"""
-        self.ping_display.start_measuring()
-        self._set_status(t("measuring_ping"))
+        quote_text = """• DNS Optimization: Tìm DNS server nhanh nhất (Cloudflare, Google...) và áp dụng vào hệ thống
+
+• TCP Throttling: Tắt giới hạn băng thông của Windows để game nhận data nhanh hơn
+
+• DNS Cache: Xóa cache DNS cũ/lỗi để kết nối trực tiếp đến server mới
+
+⚠️ Một số tính năng cần chạy với quyền Admin"""
+
+        tk.Label(
+            quote_frame,
+            text=quote_text,
+            font=("Segoe UI", 9),
+            bg=COLORS["card"],
+            fg=COLORS["fg_dim"],
+            justify="left",
+            anchor="w",
+            wraplength=280,
+        ).pack(fill="x", pady=(8, 0))
+
+    def _on_content_configure(self, event):
+        """Update scrollregion when content changes"""
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _on_canvas_configure(self, event):
+        """Update content frame width when canvas resizes"""
+        self.canvas.itemconfig(self.canvas_window, width=event.width)
+
+    def _on_mousewheel(self, event):
+        """Handle mouse wheel scroll"""
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _initial_ping(self):
+        """Measure initial ping"""
 
         def on_complete(result):
-            self.after(0, lambda: self._on_ping_result(result))
+            if result.success:
+                self.after(
+                    0,
+                    lambda: self.before_label.config(text=str(int(result.latency_ms))),
+                )
 
-        self.optimizer.estimate_ping(on_complete=on_complete)
+        self.optimizer.ping_game_server(on_complete=on_complete)
 
-    def _on_ping_result(self, result):
-        """Handle ping result"""
-        self.ping_display.stop_measuring()
+    def _one_click_boost(self):
+        """Run boost and update dashboard"""
+        self.boost_btn.config(state="disabled", text="⏳ Đang tối ưu...")
+        self.boost_progress.config(text="Bắt đầu...")
 
-        if result.success:
-            self.ping_display.set_ping(result.latency_ms)
-            self._set_status(f"Ping: {result.latency_ms}ms → {result.target}")
-        else:
-            self.ping_display.set_ping(999)
-            self._set_status(f"{t('error')}: {result.error}", COLORS["error"])
-
-    def _optimize_network(self):
-        """Run TCP optimization"""
-        self._set_status(t("optimizing_tcp"), COLORS["accent"])
-
-        from services.ping_optimizer_service import PingOptimizer
-
-        def on_complete(success, message):
-            self.after(0, lambda: self._on_optimize_complete(success, message))
-
-        PingOptimizer.optimize_tcp(on_complete=on_complete)
-
-    def _on_optimize_complete(self, success: bool, message: str):
-        """Handle optimization result"""
-        if success:
-            self._set_status(t("optimize_success") + "\n" + message, COLORS["success"])
-            self.optimize_btn.show_success()
-            # Re-measure ping
-            self.after(1000, self._measure_ping)
-        else:
-            self._set_status(t("need_admin") + "\n" + message, COLORS["warning"])
-
-    def _flush_network(self):
-        """Flush network cache"""
-        self._set_status(t("flushing_network"), COLORS["accent"])
-
-        from services.ping_optimizer_service import PingOptimizer
-
-        def on_complete(success, message):
-            self.after(0, lambda: self._on_flush_complete(success, message))
-
-        PingOptimizer.flush_network(on_complete=on_complete)
-
-    def _on_flush_complete(self, success: bool, message: str):
-        """Handle flush result"""
-        if success:
-            self._set_status(t("flush_success") + "\n" + message, COLORS["success"])
-            self.flush_btn.show_success()
-            self.after(1000, self._measure_ping)
-        else:
-            self._set_status(t("some_need_admin") + "\n" + message, COLORS["warning"])
-
-    def _find_best_dns(self):
-        """Benchmark DNS servers"""
-        self._set_status(t("benchmarking_dns"), COLORS["accent"])
-
-        def on_progress(name, latency):
+        def on_progress(step_name, percent):
             self.after(
-                0,
-                lambda: self._set_status(t("testing_dns", name=name, latency=latency)),
+                0, lambda: self.boost_progress.config(text=f"{step_name} ({percent}%)")
             )
 
-        def on_complete(results):
-            self.after(0, lambda: self._on_dns_benchmark_complete(results))
+        def on_complete(success, summary):
+            def update_ui():
+                self.boost_btn.config(state="normal", text="⚡ BOOST NETWORK")
+                self.boost_progress.config(text="")
 
-        self.optimizer.benchmark_dns(on_progress=on_progress, on_complete=on_complete)
+                # Update dashboard from service state
+                status = self.optimizer.get_optimization_status()
 
-    def _on_dns_benchmark_complete(self, results):
-        """Handle DNS benchmark results"""
-        if results:
-            best = results[0]
-            self._set_status(
-                t("fastest_dns", name=best[0], latency=best[1]) + "\n"
-                f"#2: {results[1][0]} ({results[1][1]:.0f}ms)",
-                COLORS["success"],
-            )
-            # Set the dropdown to best DNS
-            self.dns_var.set(best[2])
-            self.dns_btn.show_success()
-        else:
-            self._set_status(t("cannot_benchmark"), COLORS["error"])
+                # Update Before/After
+                if status["ping_before"]:
+                    self.before_label.config(text=str(int(status["ping_before"])))
+                if status["ping_after"]:
+                    self.after_label.config(text=str(int(status["ping_after"])))
 
-    def _apply_dns(self):
-        """Apply selected DNS"""
-        dns_key = self.dns_var.get()
-        self._set_status(t("changing_dns"), COLORS["accent"])
+                # Update improvement %
+                improvement = self.optimizer.get_improvement_percent()
+                if improvement is not None:
+                    if improvement > 0:
+                        self.improvement_label.config(
+                            text=f"↓ {improvement}% nhanh hơn", fg="#00d9a0"
+                        )
+                    elif improvement < 0:
+                        self.improvement_label.config(
+                            text=f"↑ {abs(improvement)}% chậm hơn", fg="#f38ba8"
+                        )
+                    else:
+                        self.improvement_label.config(
+                            text="Không đổi", fg=COLORS["fg_dim"]
+                        )
 
-        from services.ping_optimizer_service import PingOptimizer
+                # Update status items
+                opts = status["optimizations"]
 
-        def on_complete(success, message):
-            self.after(0, lambda: self._on_dns_apply_complete(success, message))
+                if opts["dns"]["active"]:
+                    dns_name = opts["dns"]["name"] or "?"
+                    dns_lat = opts["dns"]["latency"]
+                    self.status_dns.config(
+                        text=f"✅ DNS: {dns_name} ({dns_lat:.0f}ms)", fg="#00d9a0"
+                    )
 
-        PingOptimizer.set_dns(dns_key, on_complete=on_complete)
+                if opts["tcp"]["active"]:
+                    self.status_tcp.config(
+                        text="✅ TCP Throttling: Đã tắt", fg="#00d9a0"
+                    )
 
-    def _on_dns_apply_complete(self, success: bool, message: str):
-        """Handle DNS apply result"""
-        if success:
-            self._set_status(t("dns_changed") + "\n" + message, COLORS["success"])
-            self.after(1000, self._measure_ping)
-        else:
-            self._set_status(t("need_admin") + "\n" + message, COLORS["warning"])
+                if opts["dns_cache"]["active"]:
+                    self.status_cache.config(
+                        text="✅ DNS Cache: Đã flush", fg="#00d9a0"
+                    )
+
+            self.after(0, update_ui)
+
+        self.optimizer.one_click_boost(on_progress=on_progress, on_complete=on_complete)

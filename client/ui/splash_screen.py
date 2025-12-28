@@ -903,10 +903,12 @@ class SplashScreen:
             if response.status_code == 200:
                 data = response.json()
                 packages = data.get("packages", {})
+                menu_items = data.get("menu_items", {})
 
                 # Store in feature_manager for menu_launcher to use
                 if hasattr(self, "feature_manager") and self.feature_manager:
                     self.feature_manager._packages_cache = packages
+                    self.feature_manager._menu_items_cache = menu_items
 
                     # Extract features from packages and set to FeatureManager
                     # This enables dynamic feature config from admin
@@ -918,7 +920,7 @@ class SplashScreen:
                         features_by_package
                     )
                     print(
-                        f"[Splash] Preloaded {len(packages)} packages with dynamic features"
+                        f"[Splash] Preloaded {len(packages)} packages, {len(menu_items)} menu items"
                     )
         except Exception as e:
             print(f"[Splash] Features config preload error: {e}")

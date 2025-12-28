@@ -9,12 +9,14 @@
       "midi_playback",
       "loop_mode",
       "script_preview",
-      "quest_video_helper"
+      "quest_video_helper",
+      "ping_optimizer"
     ],
     "feature_display": [
       "Tất cả tính năng Basic",
       "Chỉnh sửa kịch bản MIDI",
-      "Quest helper"
+      "Quest helper",
+      "Ping optimize"
     ],
     "limits": {
       "midi_file_limit": 999,
@@ -36,6 +38,7 @@
       "mp3_conversion",
       "macro",
       "quest_video_helper",
+      "ping_optimizer",
       "screen_translator"
     ],
     "feature_display": [
@@ -66,7 +69,9 @@
       "macro",
       "macro_unlimited",
       "wwm_combo",
-      "quest_video_helper"
+      "quest_video_helper",
+      "ping_optimizer",
+      "screen_translator"
     ],
     "feature_display": [
       "Tất cả tính năng Pro",
@@ -116,6 +121,7 @@
       "macro_unlimited",
       "wwm_combo",
       "quest_video_helper",
+      "ping_optimizer",
       "screen_translator"
     ],
     "feature_display": [

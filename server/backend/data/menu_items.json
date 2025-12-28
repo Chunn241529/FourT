@@ -1,0 +1,26 @@
+{
+  "midi_playback": {
+    "visible": true,
+    "label": "auto_play_midi"
+  },
+  "quest_video_helper": {
+    "visible": true,
+    "label": "quest_video_helper"
+  },
+  "screen_translator": {
+    "visible": false,
+    "label": "screen_translator"
+  },
+  "ping_optimizer": {
+    "visible": true,
+    "label": "ping_optimizer"
+  },
+  "macro_recorder": {
+    "visible": true,
+    "label": "macro_recorder"
+  },
+  "wwm_combo": {
+    "visible": true,
+    "label": "macro_combo"
+  }
+}

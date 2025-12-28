@@ -17,6 +17,7 @@ from .region_selector import RegionSelector
 from services.ocr_addon_manager import OCRAddonManager
 from services.translation_service import get_translation_service, TranslationService
 from .theme import colors, FONTS, ModernButton
+from .i18n import t
 
 
 class TranslationOverlay(tk.Toplevel):
@@ -56,7 +57,7 @@ class TranslationOverlay(tk.Toplevel):
 
         self.title_label = tk.Label(
             header,
-            text="🌐 Dịch",
+            text=f"🌐 {t('st_translate')}",
             font=("Segoe UI", 9),
             bg=self.bg_color,
             fg=self.muted_color,
@@ -124,7 +125,7 @@ class TranslationOverlay(tk.Toplevel):
     def _on_stop_click(self, event):
         """Handle stop button click"""
         # Show feedback
-        self.text_label.configure(text="⏹ Đã dừng dịch realtime", fg="#f0883e")
+        self.text_label.configure(text=t("st_stopped"), fg="#f0883e")
         self.title_label.configure(text="🌐 Stopped")
 
         if self.on_stop:
@@ -283,7 +284,7 @@ class ScreenTranslatorWindow:
 
         tk.Label(
             header,
-            text="🌐 Dịch Màn Hình",
+            text=f"🌐 {t('st_title')}",
             font=("Segoe UI", 15, "bold"),
             bg=colors["bg"],
             fg=colors["fg"],
@@ -291,7 +292,7 @@ class ScreenTranslatorWindow:
 
         tk.Label(
             header,
-            text="Chọn vùng màn hình để dịch văn bản từ game",
+            text=t("st_subtitle"),
             font=("Segoe UI", 9),
             bg=colors["bg"],
             fg=colors["fg_dim"],
@@ -306,7 +307,7 @@ class ScreenTranslatorWindow:
 
         tk.Label(
             lang_row,
-            text="🔤 Ngôn ngữ",
+            text=f"🔤 {t('st_language')}",
             font=("Segoe UI", 10, "bold"),
             bg=colors["card"],
             fg=colors["fg"],
@@ -363,7 +364,7 @@ class ScreenTranslatorWindow:
 
         capture_btn = ModernButton(
             action_frame,
-            text="📷  Chụp & Dịch một lần",
+            text=t("st_capture_once"),
             command=self._start_capture_once,
             kind="primary",
         )
@@ -371,7 +372,7 @@ class ScreenTranslatorWindow:
 
         self.realtime_btn = ModernButton(
             action_frame,
-            text="🔄  Dịch Real-time",
+            text=t("st_realtime"),
             command=self._toggle_realtime,
             kind="secondary",
         )
@@ -379,7 +380,7 @@ class ScreenTranslatorWindow:
 
         self.realtime_status = tk.Label(
             action_frame,
-            text="Liên tục dịch vùng đã chọn",
+            text=t("st_realtime_desc"),
             font=("Segoe UI", 9),
             bg=colors["bg"],
             fg=colors["fg_dim"],
@@ -397,7 +398,7 @@ class ScreenTranslatorWindow:
         self.settings_expanded = True  # Start expanded
         self.settings_toggle = tk.Label(
             settings_header,
-            text="⚙️ Cài đặt",
+            text=f"⚙️ {t('st_settings')}",
             font=("Segoe UI", 10, "bold"),
             bg=colors["card"],
             fg=colors["fg"],
@@ -437,7 +438,7 @@ class ScreenTranslatorWindow:
 
         tk.Label(
             ocr_row,
-            text="OCR Engine:",
+            text=t("st_ocr_engine"),
             font=FONTS["body"],
             bg=colors["card"],
             fg=colors["fg"],
@@ -484,7 +485,7 @@ class ScreenTranslatorWindow:
 
         self.ocr_status_label = tk.Label(
             status_row,
-            text="OCR sẵn sàng",
+            text=t("st_ocr_ready", engine="OCR"),
             font=("Segoe UI", 9),
             bg=colors["card"],
             fg=colors["fg_dim"],
@@ -500,7 +501,7 @@ class ScreenTranslatorWindow:
         )
         skip_cb = tk.Checkbutton(
             skip_row,
-            text="Bỏ tên nhân vật (game dialogue)",
+            text=t("st_skip_character"),
             variable=self.skip_first_line,
             font=("Segoe UI", 10),
             bg=colors["card"],
@@ -517,7 +518,7 @@ class ScreenTranslatorWindow:
 
         tk.Label(
             interval_row,
-            text="Realtime interval:",
+            text=t("st_interval"),
             font=FONTS["body"],
             bg=colors["card"],
             fg=colors["fg"],
@@ -572,13 +573,15 @@ class ScreenTranslatorWindow:
             if is_ready:
                 self.ocr_status_indicator.configure(fg=colors["success"])
                 engine_name = "Windows OCR" if engine == "windows" else "Tesseract"
-                self.ocr_status_label.configure(text=f"{engine_name} sẵn sàng")
+                self.ocr_status_label.configure(
+                    text=t("st_ocr_ready", engine=engine_name)
+                )
             else:
                 self.ocr_status_indicator.configure(fg=colors["warning"])
-                self.ocr_status_label.configure(text="Cần cài đặt OCR")
+                self.ocr_status_label.configure(text=t("st_ocr_need_setup"))
         except Exception as e:
             self.ocr_status_indicator.configure(fg=colors["error"])
-            self.ocr_status_label.configure(text=f"Lỗi: {e}")
+            self.ocr_status_label.configure(text=f"Error: {e}")
 
     def _open_ocr_setup(self):
         """Open OCR setup window"""

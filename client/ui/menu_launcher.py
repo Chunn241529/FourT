@@ -8,6 +8,7 @@ from tkinter import Canvas, messagebox
 import math
 import time
 import os
+import threading
 from .theme import colors, FONTS
 from .i18n import t
 from feature_manager import get_feature_manager
@@ -78,6 +79,9 @@ class MenuLauncher:
         self._get_feature_manager()
 
         self.setup_ui()
+
+        # Start background refresh for menu items
+        self._start_menu_refresh_thread()
 
     def _get_feature_manager(self):
         """Get Feature Manager reference (already initialized by splash screen)"""
@@ -274,6 +278,14 @@ class MenuLauncher:
             else False
         )
 
+        # Get menu items visibility config from server
+        menu_items_config = self._get_menu_items()
+
+        def is_visible(feature_id: str) -> bool:
+            """Check if a menu item should be visible"""
+            config = menu_items_config.get(feature_id, {})
+            return config.get("visible", True)  # Default: visible
+
         # Prepare menu items
         menu_items = []
 
@@ -295,124 +307,130 @@ class MenuLauncher:
             menu_items.append({"type": "separator"})
 
         # MIDI Auto Player
-        if self.feature_manager.has_feature(Features.MIDI_PLAYBACK):
-            menu_items.append(
-                {
-                    "label": t("auto_play_midi"),
-                    "command": self.open_midi_player,
-                    "icon": "🎹",
-                    "fg": "#a6e3a1",
-                }
-            )
-        else:
-            menu_items.append(
-                {
-                    "label": t("auto_play_midi_expired"),
-                    "command": self.show_midi_restriction,
-                    "icon": "🔒",
-                    "fg": "#6c7086",
-                }
-            )
+        if is_visible("midi_playback"):
+            if self.feature_manager.has_feature(Features.MIDI_PLAYBACK):
+                menu_items.append(
+                    {
+                        "label": t("auto_play_midi"),
+                        "command": self.open_midi_player,
+                        "icon": "🎹",
+                        "fg": "#a6e3a1",
+                    }
+                )
+            else:
+                menu_items.append(
+                    {
+                        "label": t("auto_play_midi"),
+                        "command": self.show_midi_restriction,
+                        "icon": "🔒",
+                        "fg": "#6c7086",
+                    }
+                )
 
         # Quest Video Helper (PLUS+)
-        if self.feature_manager.has_feature(Features.QUEST_VIDEO_HELPER):
-            menu_items.append(
-                {
-                    "label": t("quest_video_helper"),
-                    "command": self.open_quest_video_helper,
-                    "icon": "🎯",
-                    "fg": "#89dceb",
-                }
-            )
-        else:
-            menu_items.append(
-                {
-                    "label": t("quest_video_helper_plus"),
-                    "command": self.show_quest_helper_restriction,
-                    "icon": "🔒",
-                    "fg": "#6c7086",
-                }
-            )
+        if is_visible("quest_video_helper"):
+            if self.feature_manager.has_feature(Features.QUEST_VIDEO_HELPER):
+                menu_items.append(
+                    {
+                        "label": t("quest_video_helper"),
+                        "command": self.open_quest_video_helper,
+                        "icon": "🎯",
+                        "fg": "#89dceb",
+                    }
+                )
+            else:
+                menu_items.append(
+                    {
+                        "label": t("quest_video_helper"),
+                        "command": self.show_quest_helper_restriction,
+                        "icon": "🔒",
+                        "fg": "#6c7086",
+                    }
+                )
+
+        # Ping Optimizer (Feature-gated)
+        if is_visible("ping_optimizer"):
+            if self.feature_manager.has_feature(Features.PING_OPTIMIZER):
+                menu_items.append(
+                    {
+                        "label": t("ping_optimizer"),
+                        "command": self.open_ping_optimizer,
+                        "icon": "⚡",
+                        "fg": "#cba6f7",
+                    }
+                )
+            else:
+                menu_items.append(
+                    {
+                        "label": t("ping_optimizer"),
+                        "command": self.show_ping_optimizer_restriction,
+                        "icon": "🔒",
+                        "fg": "#6c7086",
+                    }
+                )
 
         # Screen Translator (PLUS+)
-        if self.feature_manager.has_feature(Features.SCREEN_TRANSLATOR):
-            menu_items.append(
-                {
-                    "label": t("screen_translator"),
-                    "command": self.open_screen_translator,
-                    "icon": "🌐",
-                    "fg": "#94e2d5",
-                }
-            )
-        else:
-            menu_items.append(
-                {
-                    "label": t("screen_translator_plus"),
-                    "command": self.show_screen_translator_restriction,
-                    "icon": "🔒",
-                    "fg": "#6c7086",
-                }
-            )
-
-        # # Ping Optimizer (Feature-gated)
-        # if self.feature_manager.has_feature(Features.PING_OPTIMIZER):
-        #     menu_items.append(
-        #         {
-        #             "label": t("ping_optimizer"),
-        #             "command": self.open_ping_optimizer,
-        #             "icon": "⚡",
-        #             "fg": "#cba6f7",
-        #         }
-        #     )
-        # else:
-        #     menu_items.append(
-        #         {
-        #             "label": t("ping_optimizer_pro"),
-        #             "command": self.show_ping_optimizer_restriction,
-        #             "icon": "🔒",
-        #             "fg": "#6c7086",
-        #         }
-        #     )
+        if is_visible("screen_translator"):
+            if self.feature_manager.has_feature(Features.SCREEN_TRANSLATOR):
+                menu_items.append(
+                    {
+                        "label": t("screen_translator"),
+                        "command": self.open_screen_translator,
+                        "icon": "🌐",
+                        "fg": "#94e2d5",
+                    }
+                )
+            else:
+                menu_items.append(
+                    {
+                        "label": t("screen_translator"),
+                        "command": self.show_screen_translator_restriction,
+                        "icon": "🔒",
+                        "fg": "#6c7086",
+                    }
+                )
 
         # Macro Recorder
-        if has_macro:
-            menu_items.append(
-                {
-                    "label": t("macro_recorder"),
-                    "command": self.open_macro_recorder,
-                    "icon": "⏺",
-                    "fg": "#a6e3a1",
-                }
-            )
-        else:
-            menu_items.append(
-                {
-                    "label": t("macro_recorder_pro"),
-                    "command": self.show_macro_restriction,
-                    "icon": "🔒",
-                    "fg": "#6c7086",
-                }
-            )
+        if is_visible("macro_recorder"):
+            if has_macro:
+                menu_items.append(
+                    {
+                        "label": t("macro_recorder"),
+                        "command": self.open_macro_recorder,
+                        "icon": "⏺",
+                        "fg": "#a6e3a1",
+                    }
+                )
+            else:
+                menu_items.append(
+                    {
+                        "label": t("macro_recorder"),
+                        "command": self.show_macro_restriction,
+                        "icon": "🔒",
+                        "fg": "#6c7086",
+                    }
+                )
 
         # WWM Combo (PRO feature - same as Macro)
-        if has_macro:
-            menu_items.append(
-                {
-                    "label": t("macro_combo"),
-                    "command": self.open_wwm_combo,
-                    "icon": "⚔",
-                    "fg": "#c6a0f6",
-                }
-            )
-        else:
-            menu_items.append(
-                {
-                    "label": t("macro_combo_pro"),
-                    "command": self.show_wwm_restriction,
-                    "icon": "🔒",
-                    "fg": "#6c7086",
-                }
-            )
+        if is_visible("wwm_combo"):
+            if has_macro:
+                menu_items.append(
+                    {
+                        "label": t("macro_combo"),
+                        "command": self.open_wwm_combo,
+                        "icon": "⚔",
+                        "fg": "#c6a0f6",
+                    }
+                )
+            else:
+                menu_items.append(
+                    {
+                        "label": t("macro_combo"),
+                        "command": self.show_wwm_restriction,
+                        "icon": "🔒",
+                        "fg": "#6c7086",
+                    }
+                )
 
         menu_items.append({"type": "separator"})
 
@@ -610,6 +628,65 @@ class MenuLauncher:
 
         return None
 
+    def _get_menu_items(self):
+        """Get menu items config from server (with caching from splash screen)"""
+        # Check if we have cached data locally
+        if hasattr(self, "_menu_items_cache") and self._menu_items_cache:
+            return self._menu_items_cache
+
+        # Check if feature_manager has cached data (from splash screen preload)
+        if self.feature_manager and hasattr(self.feature_manager, "_menu_items_cache"):
+            if self.feature_manager._menu_items_cache:
+                self._menu_items_cache = self.feature_manager._menu_items_cache
+                return self._menu_items_cache
+
+        # Default: all visible
+        return {}
+
+    def _start_menu_refresh_thread(self):
+        """Start background thread to periodically refresh menu items from server"""
+        self._refresh_running = True
+        self._refresh_interval = 30  # seconds
+
+        def refresh_loop():
+            while self._refresh_running:
+                time.sleep(self._refresh_interval)
+                if not self._refresh_running:
+                    break
+                self._refresh_menu_items_cache()
+
+        self._refresh_thread = threading.Thread(target=refresh_loop, daemon=True)
+        self._refresh_thread.start()
+        print("[MenuLauncher] Started menu items refresh thread (30s interval)")
+
+    def _refresh_menu_items_cache(self):
+        """Fetch latest menu items from server and update cache"""
+        try:
+            import requests
+            from core.config import get_license_server_url
+            from services.connection_manager import is_server_offline
+
+            if is_server_offline():
+                return
+
+            url = f"{get_license_server_url()}/features/config"
+            response = requests.get(url, timeout=5)
+
+            if response.status_code == 200:
+                data = response.json()
+                new_menu_items = data.get("menu_items", {})
+
+                # Check if changed
+                old_cache = getattr(self, "_menu_items_cache", {})
+                if new_menu_items != old_cache:
+                    print("[MenuLauncher] Menu items changed, updating cache")
+                    self._menu_items_cache = new_menu_items
+                    # Also update feature_manager cache
+                    if self.feature_manager:
+                        self.feature_manager._menu_items_cache = new_menu_items
+        except Exception as e:
+            print(f"[MenuLauncher] Menu refresh error: {e}")
+
     def show_feature_restriction(
         self, feature: str, feature_name: str, description: str = ""
     ):
@@ -752,7 +829,8 @@ class MenuLauncher:
                 if self.quest_helper_window.root and tk.Toplevel.winfo_exists(
                     self.quest_helper_window.root
                 ):
-                    self.quest_helper_window.show()
+                    self.quest_helper_window.root.lift()
+                    self.quest_helper_window.root.focus_force()
                     return
             except:
                 pass
@@ -775,7 +853,7 @@ class MenuLauncher:
             self.ping_optimizer_window = FramelessWindow(
                 self.root, title="Ping Optimizer", icon_path=icon_path
             )
-            self.ping_optimizer_window.geometry("380x450")
+            self.ping_optimizer_window.geometry("380x525")
 
             from .theme import apply_theme
 
@@ -788,22 +866,13 @@ class MenuLauncher:
 
     def open_screen_translator(self):
         """Open Screen Translator window"""
-        # Check permission first
-        if not self.feature_manager.has_feature(Features.SCREEN_TRANSLATOR):
-            from tkinter import messagebox
-
-            messagebox.showwarning(
-                "Tính năng không khả dụng",
-                "Dịch Màn Hình yêu cầu gói Plus trở lên.\nVui lòng nâng cấp gói để sử dụng tính năng này.",
-            )
-            return
-
         if self.screen_translator_window:
             try:
                 if self.screen_translator_window.root and tk.Toplevel.winfo_exists(
                     self.screen_translator_window.root
                 ):
-                    self.screen_translator_window.show()
+                    self.screen_translator_window.root.lift()
+                    self.screen_translator_window.root.focus_force()
                     return
             except:
                 pass
