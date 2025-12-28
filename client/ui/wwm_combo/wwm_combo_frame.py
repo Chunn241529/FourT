@@ -13,6 +13,7 @@ from pathlib import Path
 # Import components from this package
 from .tooltip import RichTooltip
 from .settings_dialog import SettingsDialog
+from .macro_record_dialog import MacroRecordDialog
 
 # Import theme
 try:
@@ -43,8 +44,18 @@ from services.wwm_combo_runtime import get_wwm_combo_runtime
 from services.user_settings_service import get_user_settings_service
 
 
-# Action items for weapon switching (scroll actions)
+# Action items for weapon switching (scroll actions) and utilities
 ACTION_ITEMS = [
+    {
+        "id": "delay",
+        "name": "⏳ Delay",
+        "key": "delay",
+        "color": "#f39c12",  # Orange
+        "hold": 0,
+        "description": "Add delay between actions (drag to timeline)",
+        "is_action": True,
+        "is_delay": True,  # Special flag for delay handling
+    },
     {
         "id": "scroll_down",
         "name": "⬇ Switch Weapon",
@@ -310,7 +321,7 @@ class WWMComboFrame(tk.Frame):
         ).pack(side="left", padx=10, pady=8)
 
         ModernButton(
-            header, text="+ Delay", command=self.add_delay_item, kind="secondary"
+            header, text="🔴 Record", command=self._open_record_dialog, kind="danger"
         ).pack(side="right", padx=5, pady=5)
 
         # Weapon selector
@@ -1002,11 +1013,18 @@ class WWMComboFrame(tk.Frame):
         # Check if user has custom keybinding for this skill type
         if keybind_key in keybindings:
             display_key = keybindings[keybind_key]
+            # Parse modifiers from keybind string (e.g., "alt+4" -> modifiers=["alt"], key="4")
+            if "+" in display_key:
+                parts = display_key.split("+")
+                modifiers = [p.strip() for p in parts[:-1]]
+                display_key = parts[-1].strip()
+            else:
+                modifiers = []
         else:
             display_key = default_key
+            modifiers = skill.get("modifiers", [])
 
         # Build display text with modifiers if present
-        modifiers = skill.get("modifiers", [])
         if modifiers:
             mod_prefix = "+".join(m.upper() for m in modifiers) + "+"
             key_display_text = mod_prefix + display_key.upper().replace("`", "~")
@@ -1106,6 +1124,8 @@ class WWMComboFrame(tk.Frame):
 
             if item["type"] == "delay":
                 w = self._render_delay_item(x, y, h, i, item, tag)
+            elif item["type"] in ("macro_key", "macro_mouse"):
+                w = self._render_macro_item(x, y, h, i, item, tag)
             else:
                 w = self._render_skill_item(x, y, h, i, item, tag)
 
@@ -1159,6 +1179,42 @@ class WWMComboFrame(tk.Frame):
         self.timeline_canvas.tag_bind(
             tag, "<Double-1>", lambda e, i=idx: self.edit_delay(i)
         )
+        return w
+
+    def _render_macro_item(self, x, y, h, idx, item, tag):
+        """Render a macro event item (keyboard/mouse)"""
+        icon = item.get("icon", "⌨")
+        name = item.get("name", "Macro")
+
+        # Color based on type
+        if item["type"] == "macro_key":
+            color = "#3498db"  # Blue for keyboard
+        else:
+            color = "#e74c3c"  # Red for mouse
+
+        w = max(60, len(name) * 7 + 20)
+
+        # Background
+        self.timeline_canvas.create_rectangle(
+            x,
+            y,
+            x + w,
+            y + h,
+            fill=color,
+            outline="white",
+            tags=(tag, "draggable"),
+        )
+
+        # Icon and text
+        self.timeline_canvas.create_text(
+            x + w / 2,
+            y + h / 2,
+            text=f"{icon} {name}",
+            font=FONTS["small"],
+            fill="white",
+            tags=(tag, "draggable"),
+        )
+
         return w
 
     def _render_skill_item(self, x, y, h, idx, item, tag):
@@ -1332,24 +1388,28 @@ class WWMComboFrame(tk.Frame):
 
                 if item_data:
                     if is_action:
-                        # Handle action items (scroll actions) - simpler flow
-                        self.combo_items.append(
-                            {
-                                "type": "skill",  # Uses same execution path as skills
-                                "id": item_data["id"],
-                                "name": item_data["name"],
-                                "key": item_data["key"],  # scroll_down or scroll_up
-                                "color": item_data.get("color", "#9b59b6"),
-                                "hold": item_data.get("hold", 0.05),
-                                "click_count": 1,
-                                "weapon": None,
-                                "modifiers": [],
-                                "description": item_data.get("description", ""),
-                                "image": "",
-                                "countdown": 0,
-                                "is_action": True,  # Mark as action for display
-                            }
-                        )
+                        # Check if this is a delay action - show dialog
+                        if item_data.get("is_delay"):
+                            self.add_delay_item()
+                        else:
+                            # Handle action items (scroll actions) - simpler flow
+                            self.combo_items.append(
+                                {
+                                    "type": "skill",  # Uses same execution path as skills
+                                    "id": item_data["id"],
+                                    "name": item_data["name"],
+                                    "key": item_data["key"],  # scroll_down or scroll_up
+                                    "color": item_data.get("color", "#9b59b6"),
+                                    "hold": item_data.get("hold", 0.05),
+                                    "click_count": 1,
+                                    "weapon": None,
+                                    "modifiers": [],
+                                    "description": item_data.get("description", ""),
+                                    "image": "",
+                                    "countdown": 0,
+                                    "is_action": True,  # Mark as action for display
+                                }
+                            )
                     else:
                         # Handle regular skills
                         skill = item_data
@@ -1378,8 +1438,16 @@ class WWMComboFrame(tk.Frame):
 
                         if keybind_key in keybindings:
                             skill_key = keybindings[keybind_key]
+                            # Parse modifiers from keybind string (e.g., "alt+4" -> modifiers=["alt"], key="4")
+                            if "+" in skill_key:
+                                parts = skill_key.split("+")
+                                skill_modifiers = [p.strip() for p in parts[:-1]]
+                                skill_key = parts[-1].strip()
+                            else:
+                                skill_modifiers = []
                         else:
                             skill_key = skill["key"]
+                            skill_modifiers = skill.get("modifiers", [])
 
                         self.combo_items.append(
                             {
@@ -1391,7 +1459,7 @@ class WWMComboFrame(tk.Frame):
                                 "hold": skill.get("hold", 0.05),
                                 "click_count": skill.get("click_count", 1),
                                 "weapon": skill.get("weapon"),
-                                "modifiers": skill.get("modifiers", []),
+                                "modifiers": skill_modifiers,
                                 "description": skill.get("description", ""),
                                 "image": skill.get("image", ""),
                                 "countdown": skill.get("countdown", 0),
@@ -1610,6 +1678,70 @@ class WWMComboFrame(tk.Frame):
         if delay:
             self.combo_items.append({"type": "delay", "value": delay})
             self.refresh_timeline()
+
+    def _open_record_dialog(self):
+        """Open macro record dialog"""
+        try:
+            root = self.winfo_toplevel()
+            MacroRecordDialog(root, on_add_callback=self._on_record_complete)
+        except Exception as e:
+            print(f"[WWMCombo] Error opening record dialog: {e}")
+            import traceback
+
+            traceback.print_exc()
+
+    def _on_record_complete(self, recorded_events):
+        """Handle recorded macro events - convert to combo items"""
+        if not recorded_events:
+            return
+
+        for event in recorded_events:
+            event_type = event["type"]
+            data = event["data"]
+            delay = event.get("delay", 0)
+
+            # Add delay before action if significant
+            if delay > 0.05:
+                self.combo_items.append({"type": "delay", "value": delay})
+
+            # Convert event to combo item
+            if event_type == "key_press":
+                self.combo_items.append(
+                    {
+                        "type": "macro_key",
+                        "key": data["key"],
+                        "action": "press",
+                        "icon": "⌨",
+                        "name": f"Key {data['key']} ↓",
+                    }
+                )
+            elif event_type == "key_release":
+                self.combo_items.append(
+                    {
+                        "type": "macro_key",
+                        "key": data["key"],
+                        "action": "release",
+                        "icon": "⌨",
+                        "name": f"Key {data['key']} ↑",
+                    }
+                )
+            elif event_type == "mouse_click":
+                action = "press" if data["action"] == "pressed" else "release"
+                action_icon = "↓" if action == "press" else "↑"
+                self.combo_items.append(
+                    {
+                        "type": "macro_mouse",
+                        "button": data["button"],
+                        "x": data.get("x", 0),
+                        "y": data.get("y", 0),
+                        "action": action,
+                        "icon": "🖱",
+                        "name": f"{data['button']} {action_icon}",
+                    }
+                )
+
+        self.refresh_timeline()
+        self.status_var.set(f"Added {len(recorded_events)} recorded events")
 
     def clear_combo(self):
         """Clear combo timeline"""

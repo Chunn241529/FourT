@@ -34,6 +34,11 @@ nuitka-crash-report.xml
 # Client user data (optional - may want to commit defaults)
 client/data/fourthelper.db
 client/data/wwm_user_settings.json
+#Release
+client/releases
+# client/data
+client/dist
+client/build
 
 # ==================================
 # BUILD ARTIFACTS
@@ -75,11 +80,7 @@ macros/
 # User MIDI files
 midi_files/
 
-#Release
-client/releases
-client/data
-client/dist
-client/build
+
 
 # ==================================
 # PYTHON ARTIFACTS
@@ -226,8 +227,8 @@ target/
 
 # mypy
 .mypy_cache/
-.dmypy.json
-dmypy.json
+# .dmypy.json
+# dmypy.json
 
 # Pyre
 .pyre/

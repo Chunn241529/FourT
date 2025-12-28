@@ -664,6 +664,34 @@ class SettingsDialog:
         if not key_data:
             return
 
+        # Check for modifier keys being held using Windows API
+        # GetAsyncKeyState returns negative if key is currently pressed
+        import ctypes
+
+        user32 = ctypes.windll.user32
+
+        # Virtual key codes: VK_CONTROL=0x11, VK_MENU(Alt)=0x12, VK_SHIFT=0x10
+        modifiers = []
+        if user32.GetAsyncKeyState(0x11) & 0x8000:  # Control
+            modifiers.append("ctrl")
+        if user32.GetAsyncKeyState(0x12) & 0x8000:  # Alt
+            modifiers.append("alt")
+        if user32.GetAsyncKeyState(0x10) & 0x8000:  # Shift
+            modifiers.append("shift")
+
+        # Build the combined key string
+        if modifiers:
+            combined_key = "+".join(modifiers) + "+" + key_data["id"]
+            combined_name = (
+                "+".join(m.upper() for m in modifiers) + "+" + key_data["name"]
+            )
+        else:
+            combined_key = key_data["id"]
+            combined_name = key_data["name"]
+
+        # Create combined key_data for display
+        combined_key_data = {"id": combined_key, "name": combined_name}
+
         # Check which drop zone we dropped on
         for skill_id, (drop_zone, key_label, container) in self.drop_zones.items():
             try:
@@ -673,9 +701,9 @@ class SettingsDialog:
                 h = drop_zone.winfo_height()
 
                 if x <= event.x_root <= x + w and y <= event.y_root <= y + h:
-                    # Update binding
-                    self.keybindings[skill_id] = key_data["id"]
-                    self._update_drop_zone(skill_id, key_data)
+                    # Update binding with combined key
+                    self.keybindings[skill_id] = combined_key
+                    self._update_drop_zone(skill_id, combined_key_data)
                     break
             except:
                 pass

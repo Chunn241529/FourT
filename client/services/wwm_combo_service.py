@@ -430,6 +430,35 @@ class ComboPlayer:
                         modifiers = item.get("modifiers", [])
                         self._execute_skill(item["key"], hold_duration, modifiers)
 
+                elif item["type"] == "macro_key":
+                    # Execute recorded keyboard event
+                    key = self._parse_key(item["key"])
+                    if item["action"] == "press":
+                        self.keyboard_controller.press(key)
+                    else:
+                        self.keyboard_controller.release(key)
+
+                elif item["type"] == "macro_mouse":
+                    # Execute recorded mouse event
+                    button_str = item["button"]
+                    if "left" in button_str:
+                        button = mouse.Button.left
+                    elif "right" in button_str:
+                        button = mouse.Button.right
+                    elif "middle" in button_str:
+                        button = mouse.Button.middle
+                    elif "x1" in button_str:
+                        button = mouse.Button.x1
+                    elif "x2" in button_str:
+                        button = mouse.Button.x2
+                    else:
+                        button = mouse.Button.left
+
+                    if item["action"] == "press":
+                        self.mouse_controller.press(button)
+                    else:
+                        self.mouse_controller.release(button)
+
             iterations += 1
             if loop_count == 0:
                 continue

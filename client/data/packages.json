@@ -1,0 +1,155 @@
+{
+  "basic": {
+    "name": "Basic",
+    "description": "Gói cơ bản (1 tháng)",
+    "price": 20000,
+    "duration_days": 30,
+    "order": 1,
+    "features": [
+      "midi_playback",
+      "loop_mode"
+    ],
+    "feature_display": [
+      "Auto đánh đàn",
+      "Chế độ Loop nhạc"
+    ],
+    "limits": {
+      "midi_file_limit": 999,
+      "macro_infinite_loop": false
+    },
+    "color": "#3498db",
+    "recommended": false
+  },
+  "plus": {
+    "name": "Plus",
+    "description": "Gói nâng cao (1 tháng)",
+    "price": 35000,
+    "duration_days": 30,
+    "order": 2,
+    "features": [
+      "midi_playback",
+      "loop_mode",
+      "script_preview",
+      "quest_video_helper"
+    ],
+    "feature_display": [
+      "Auto đánh đàn",
+      "Chế độ Loop nhạc",
+      "Chỉnh sửa kịch bản đàn",
+      "Search quest helper"
+    ],
+    "limits": {
+      "midi_file_limit": 999,
+      "macro_infinite_loop": false
+    },
+    "color": "#2ecc71",
+    "recommended": false
+  },
+  "pro": {
+    "name": "Pro",
+    "description": "Gói chuyên nghiệp",
+    "price": 55000,
+    "duration_days": 30,
+    "order": 2,
+    "features": [
+      "midi_playback",
+      "loop_mode",
+      "script_preview",
+      "mp3_conversion",
+      "macro",
+      "quest_video_helper",
+      "ping_optimizer"
+    ],
+    "feature_display": [
+      "Tất cả tính năng Plus",
+      "Chuyển đổi MP3 sang MIDI",
+      "Macro cơ bản",
+      "Giảm ping"
+    ],
+    "limits": {
+      "midi_file_limit": 999,
+      "macro_save_limit": 5,
+      "macro_infinite_loop": false
+    },
+    "color": "#f1c40f",
+    "recommended": true
+  },
+  "premium": {
+    "name": "Premium",
+    "description": "Trải nghiệm đỉnh cao",
+    "price": 89000,
+    "duration_days": 30,
+    "order": 4,
+    "features": [
+      "midi_playback",
+      "loop_mode",
+      "script_preview",
+      "mp3_conversion",
+      "macro",
+      "macro_unlimited",
+      "wwm_combo",
+      "quest_video_helper",
+      "ping_optimizer"
+    ],
+    "feature_display": [
+      "Tất cả tính năng Pro",
+      "Macro nâng cao",
+      "Combo studio",
+      "Giảm ping"
+    ],
+    "limits": {
+      "midi_file_limit": 999,
+      "macro_save_limit": 999,
+      "macro_infinite_loop": true
+    },
+    "color": "#9b59b6",
+    "recommended": false
+  },
+  "trial": {
+    "name": "Trial",
+    "description": "Dùng thử tất cả tính năng",
+    "price": 0,
+    "duration_days": 3,
+    "order": -1,
+    "features": [
+      "midi_playback",
+      "loop_mode",
+      "script_preview",
+      "mp3_conversion",
+      "macro",
+      "macro_unlimited",
+      "wwm_combo",
+      "quest_video_helper"
+    ],
+    "feature_display": [
+      "Dùng thử 3 ngày",
+      "Tất cả tính năng Premium"
+    ],
+    "limits": {
+      "midi_file_limit": 999,
+      "macro_save_limit": 999,
+      "macro_infinite_loop": true
+    },
+    "color": "#e67e22",
+    "recommended": false
+  },
+  "free": {
+    "name": "Free",
+    "description": "Sau khi hết Trial",
+    "price": 0,
+    "duration_days": 0,
+    "order": 0,
+    "features": [
+      "midi_playback"
+    ],
+    "feature_display": [
+      "Auto đánh đàn"
+    ],
+    "limits": {
+      "midi_file_limit": 999,
+      "macro_infinite_loop": false
+    },
+    "color": "#95a5a6",
+    "recommended": false
+  }
+}

@@ -13,6 +13,7 @@ from pathlib import Path
 # Import components from this package
 from .tooltip import RichTooltip
 from .settings_dialog import SettingsDialog
+from .macro_record_dialog import MacroRecordDialog
 
 # Import theme
 try:
@@ -231,6 +232,10 @@ class WWMComboWindow(FramelessWindow):
 
         ModernButton(
             header, text="+ Delay", command=self.add_delay_item, kind="secondary"
+        ).pack(side="right", padx=5, pady=5)
+
+        ModernButton(
+            header, text="🔴 Record", command=self._open_record_dialog, kind="danger"
         ).pack(side="right", padx=5, pady=5)
 
         # Weapon selector
@@ -1336,6 +1341,63 @@ class WWMComboWindow(FramelessWindow):
         if delay:
             self.combo_items.append({"type": "delay", "value": delay})
             self.refresh_timeline()
+
+    def _open_record_dialog(self):
+        """Open macro record dialog"""
+        MacroRecordDialog(self, on_add_callback=self._on_record_complete)
+
+    def _on_record_complete(self, recorded_events):
+        """Handle recorded macro events - convert to combo items"""
+        if not recorded_events:
+            return
+
+        for event in recorded_events:
+            event_type = event["type"]
+            data = event["data"]
+            delay = event.get("delay", 0)
+
+            # Add delay before action if significant
+            if delay > 0.05:
+                self.combo_items.append({"type": "delay", "value": delay})
+
+            # Convert event to combo item
+            if event_type == "key_press":
+                self.combo_items.append(
+                    {
+                        "type": "macro_key",
+                        "key": data["key"],
+                        "action": "press",
+                        "icon": "⌨",
+                        "name": f"Key {data['key']} ↓",
+                    }
+                )
+            elif event_type == "key_release":
+                self.combo_items.append(
+                    {
+                        "type": "macro_key",
+                        "key": data["key"],
+                        "action": "release",
+                        "icon": "⌨",
+                        "name": f"Key {data['key']} ↑",
+                    }
+                )
+            elif event_type == "mouse_click":
+                action = "press" if data["action"] == "pressed" else "release"
+                action_icon = "↓" if action == "press" else "↑"
+                self.combo_items.append(
+                    {
+                        "type": "macro_mouse",
+                        "button": data["button"],
+                        "x": data.get("x", 0),
+                        "y": data.get("y", 0),
+                        "action": action,
+                        "icon": "🖱",
+                        "name": f"{data['button']} {action_icon}",
+                    }
+                )
+
+        self.refresh_timeline()
+        self.status_var.set(f"Added {len(recorded_events)} recorded events")
 
     def clear_combo(self):
         """Clear combo timeline"""

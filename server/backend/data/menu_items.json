@@ -8,7 +8,7 @@
     "label": "quest_video_helper"
   },
   "screen_translator": {
-    "visible": false,
+    "visible": true,
     "label": "screen_translator"
   },
   "ping_optimizer": {
@@ -16,7 +16,7 @@
     "label": "ping_optimizer"
   },
   "macro_recorder": {
-    "visible": true,
+    "visible": false,
     "label": "macro_recorder"
   },
   "wwm_combo": {
