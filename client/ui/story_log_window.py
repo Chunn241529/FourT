@@ -6,8 +6,8 @@ Displays a history of translated text (dialogue history)
 import tkinter as tk
 from tkinter import ttk
 import datetime
-from ..theme import colors, FONTS
-from ..i18n import t
+from .theme import colors, FONTS
+from .i18n import t
 
 
 class StoryLogWindow(tk.Toplevel):

@@ -29,3 +29,7 @@ basic-pitch>=0.3.0
 yt-dlp
 winocr
 pystray
+groq
+bcrypt
+python-jose[cryptography]
+email-validator

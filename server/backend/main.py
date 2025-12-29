@@ -1,6 +1,12 @@
 from .routers import web_home
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
+
 from backend.routers import (
     license,
     features,
@@ -19,7 +25,9 @@ from backend.routers import (
     youtube,
     auth,  # Community Auth
     community,  # Community MIDI Platform
+    community,  # Community MIDI Platform
     community_web,  # Community Web Pages
+    translator,  # AI Translator
 )
 from backend.middleware.rate_limiter import RateLimitMiddleware
 
@@ -102,6 +110,9 @@ app.include_router(community.router)  # Community MIDI Platform
 
 # Community Web Pages - accessible at /community/* or midi.fourt.io.vn/*
 app.include_router(community_web.router, prefix="/community", tags=["community-web"])
+
+# AI Translator
+app.include_router(translator.router)
 
 
 # REMOVED OLD ROOT ROUTE: @app.get("/")

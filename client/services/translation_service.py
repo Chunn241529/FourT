@@ -145,6 +145,50 @@ class TranslationService:
         """Clear translation cache"""
         self._cache.clear()
 
+    def translate_smart(
+        self,
+        text: str,
+        context: Optional[str] = None,
+        dest: str = "vi",
+        style: str = "volam",
+        api_key: Optional[str] = None,
+    ) -> tuple[str, str]:
+        """
+        Smart translate using backend AI Proxy
+        Falls back to Google Translate on error
+        """
+        import requests
+
+        # TODO: Get from config
+        # Local development URL
+        BACKEND_URL = "http://localhost:8000/translator/smart"
+
+        try:
+            response = requests.post(
+                BACKEND_URL,
+                json={
+                    "text": text,
+                    "target_lang": dest,
+                    "context": context,
+                    "style": style,
+                    "api_key": api_key,
+                },
+                timeout=5,
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                return data["translated_text"], "ai"
+            else:
+                print(f"[TranslationService] Backend error: {response.text}")
+                # Fallback
+                return self.translate(text, dest)
+
+        except Exception as e:
+            print(f"[TranslationService] Smart translate failed: {e}")
+            # Fallback
+            return self.translate(text, dest)
+
     @staticmethod
     def get_language_name(code: str) -> str:
         """Get language display name from code"""

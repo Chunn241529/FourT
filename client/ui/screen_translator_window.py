@@ -18,15 +18,17 @@ from services.ocr_addon_manager import OCRAddonManager
 from services.translation_service import get_translation_service, TranslationService
 from .theme import colors, FONTS, ModernButton
 from .i18n import t
+from .story_log_window import StoryLogWindow
 
 
 class TranslationOverlay(tk.Toplevel):
     """Floating overlay to display translated text - soft, minimal design"""
 
-    def __init__(self, parent, on_stop=None):
+    def __init__(self, parent, on_stop=None, on_show_log=None):
         super().__init__(parent)
 
         self.on_stop = on_stop  # Callback for stop button
+        self.on_show_log = on_show_log  # Callback for log button
 
         self.overrideredirect(True)
         self.attributes("-topmost", True)
@@ -67,6 +69,20 @@ class TranslationOverlay(tk.Toplevel):
         # Buttons frame (right side) - subtle
         btn_frame = tk.Frame(header, bg=self.bg_color)
         btn_frame.pack(side="right")
+
+        # Log button - scroll icon
+        self.log_btn = tk.Label(
+            btn_frame,
+            text="📜",
+            font=("Segoe UI", 11),
+            bg=self.bg_color,
+            fg="#a8b8d0",  # Light blue-ish
+            cursor="hand2",
+        )
+        self.log_btn.pack(side="left", padx=(0, 12))
+        self.log_btn.bind("<Button-1>", lambda e: self._on_log_click())
+        self.log_btn.bind("<Enter>", lambda e: self.log_btn.configure(fg="#ffffff"))
+        self.log_btn.bind("<Leave>", lambda e: self.log_btn.configure(fg="#a8b8d0"))
 
         # Stop button - subtle
         self.stop_btn = tk.Label(
@@ -133,6 +149,11 @@ class TranslationOverlay(tk.Toplevel):
 
         # Hide after short delay
         self.after(1500, self.hide)
+
+    def _on_log_click(self):
+        """Handle log button click"""
+        if self.on_show_log:
+            self.on_show_log()
 
     def _start_drag(self, event):
         self._drag_x = event.x
@@ -210,6 +231,7 @@ class ScreenTranslatorWindow:
         # UI
         self.root: Optional[FramelessWindow] = None
         self.overlay: Optional[TranslationOverlay] = None
+        self.story_log: Optional[StoryLogWindow] = None
 
         self._create_window()
 
@@ -240,7 +262,11 @@ class ScreenTranslatorWindow:
             "target_lang": "vi",
             "ocr_engine": "windows",
             "skip_first_line": True,
+            "ocr_engine": "windows",
+            "skip_first_line": True,
             "interval": "800",
+            "smart_mode": False,
+            "groq_api_key": "",
         }
 
     def _save_settings(self):
@@ -251,7 +277,15 @@ class ScreenTranslatorWindow:
                 "target_lang": self.target_var.get(),
                 "ocr_engine": self.engine_var.get(),
                 "skip_first_line": self.skip_first_line.get(),
+                "ocr_engine": self.engine_var.get(),
+                "skip_first_line": self.skip_first_line.get(),
                 "interval": self.interval_var.get(),
+                "smart_mode": self.smart_mode_var.get(),
+                "groq_api_key": (
+                    self.groq_api_key_var.get()
+                    if self.groq_api_key_var.get() != "Enter Groq API Key..."
+                    else ""
+                ),
             }
             path = self._get_settings_path()
             with open(path, "w", encoding="utf-8") as f:
@@ -271,7 +305,7 @@ class ScreenTranslatorWindow:
         self.root = FramelessWindow(
             self.parent, title="Screen Translator", icon_path=icon_path
         )
-        self.root.geometry("400x520")
+        self.root.geometry("400x550")
         self.root.minsize(380, 480)
 
         # Main container with padding
@@ -387,6 +421,119 @@ class ScreenTranslatorWindow:
         )
         self.realtime_status.pack(pady=(5, 0))
 
+        # === AI MODE TOGGLE ===
+        ai_frame = tk.Frame(main, bg=colors["bg"])
+        ai_frame.pack(fill="x", pady=(5, 0))
+
+        self.smart_mode_var = tk.BooleanVar(
+            value=self._settings.get("smart_mode", False)
+        )
+        self.groq_api_key_var = tk.StringVar(
+            value=self._settings.get("groq_api_key", "")
+        )
+
+        # Container for API Key (Hidden by default)
+        self.api_key_container = tk.Frame(ai_frame, bg=colors["bg"])
+
+        # Input Frame - Darker card background for contrast
+        self.api_key_frame = tk.Frame(
+            self.api_key_container, bg=colors["card"], padx=8, pady=4
+        )
+        self.api_key_frame.pack(side="left", fill="x", expand=True, padx=(10, 0))
+
+        self.api_key_entry = tk.Entry(
+            self.api_key_frame,
+            textvariable=self.groq_api_key_var,
+            font=("Segoe UI", 9),
+            bg=colors["card"],
+            fg=colors["fg"],
+            insertbackground=colors["fg"],
+            bd=0,
+            width=18,
+            show="*",
+        )
+        self.api_key_entry.pack(side="left", fill="x", expand=True)
+
+        # Link to get key
+        def open_groq_console(e):
+            import webbrowser
+
+            webbrowser.open("https://console.groq.com/keys")
+
+        link_lbl = tk.Label(
+            self.api_key_frame,
+            text="Get key free",
+            font=("Segoe UI", 8, "underline"),
+            bg=colors["card"],
+            fg=colors["accent"],
+            cursor="hand2",
+        )
+        link_lbl.pack(side="right", padx=(5, 0))
+        link_lbl.bind("<Button-1>", open_groq_console)
+        # Placeholder Logic
+        PLACEHOLDER = "Enter Groq API Key..."
+
+        def on_entry_focus_in(event):
+            if self.groq_api_key_var.get() == PLACEHOLDER:
+                self.groq_api_key_var.set("")
+                self.api_key_entry.configure(show="*", fg=colors["fg"])
+
+        def on_entry_focus_out(event):
+            if not self.groq_api_key_var.get():
+                self.groq_api_key_var.set(PLACEHOLDER)
+                self.api_key_entry.configure(show="", fg=colors["fg_dim"])
+            self._save_settings()
+
+        self.api_key_entry.bind("<FocusIn>", on_entry_focus_in)
+        self.api_key_entry.bind("<FocusOut>", on_entry_focus_out)
+
+        # Initialize State
+        current_key = self.groq_api_key_var.get()
+        if not current_key:
+            self.groq_api_key_var.set(PLACEHOLDER)
+            self.api_key_entry.configure(show="", fg=colors["fg_dim"])
+        else:
+            self.api_key_entry.configure(show="*", fg=colors["fg"])
+
+        def toggle_smart():
+            is_smart = self.smart_mode_var.get()
+            if is_smart:
+                self.smart_btn.configure(text="⚡ Smart AI: ON", fg=colors["accent"])
+                self.api_key_container.pack(side="left", fill="x", expand=True)
+                # Auto focus if using placeholder
+                if self.groq_api_key_var.get() == PLACEHOLDER:
+                    # self.api_key_entry.focus() # Removed auto-focus
+                    pass
+            else:
+                self.smart_btn.configure(text="⚡ Smart AI: OFF", fg=colors["fg_dim"])
+                self.api_key_container.pack_forget()
+            self._save_settings()
+
+        self.smart_btn = tk.Checkbutton(
+            ai_frame,
+            text="⚡ Smart AI" + ("" if not self.smart_mode_var.get() else ": ON"),
+            variable=self.smart_mode_var,
+            font=("Segoe UI", 10, "bold"),
+            bg=colors["bg"],
+            fg=colors["fg_dim"],
+            activebackground=colors["bg"],
+            activeforeground=colors["accent"],
+            selectcolor=colors["bg"],
+            command=toggle_smart,
+            indicatoron=False,  # Make it look like a button or label
+            bd=0,
+        )
+        # Custom styling to make it look nicer
+        self.smart_btn.pack(side="left")
+
+        # Initial state
+        if self.smart_mode_var.get():
+            self.smart_btn.configure(text="⚡ Smart AI: ON", fg=colors["accent"])
+            self.api_key_container.pack(side="left", fill="x", expand=True)
+        else:
+            self.smart_btn.configure(text="⚡ Smart AI: OFF", fg=colors["fg_dim"])
+            self.api_key_container.pack_forget()
+
         # === SETTINGS CARD ===
         settings_card = tk.Frame(main, bg=colors["card"], padx=14, pady=12)
         settings_card.pack(fill="x", pady=(8, 0))
@@ -415,6 +562,18 @@ class ScreenTranslatorWindow:
             cursor="hand2",
         )
         self.toggle_arrow.pack(side="left", padx=(5, 0))
+
+        # Story Log Button
+        self.log_btn = tk.Label(
+            settings_header,
+            text="📜 Log",
+            font=("Segoe UI", 10),
+            bg=colors["card"],
+            fg=colors["accent"],
+            cursor="hand2",
+        )
+        self.log_btn.pack(side="right", padx=5)
+        self.log_btn.bind("<Button-1>", lambda e: self._toggle_story_log())
 
         # Settings content frame
         self.settings_content = tk.Frame(settings_card, bg=colors["card"])
@@ -546,9 +705,15 @@ class ScreenTranslatorWindow:
         self._update_ocr_status()
 
         # Create overlay with stop callback
-        self.overlay = TranslationOverlay(self.parent, on_stop=self._stop_realtime_mode)
+        self.overlay = TranslationOverlay(
+            self.parent,
+            on_stop=self._stop_realtime_mode,
+            on_show_log=self._toggle_story_log,
+        )
 
         # Close handler
+        if self.story_log and self.story_log.winfo_exists():
+            self.story_log.destroy()
         self.root.set_on_close(self._on_close)
 
     def _on_lang_change(self, event=None):
@@ -582,6 +747,25 @@ class ScreenTranslatorWindow:
         except Exception as e:
             self.ocr_status_indicator.configure(fg=colors["error"])
             self.ocr_status_label.configure(text=f"Error: {e}")
+
+    def _ensure_story_log(self):
+        """Ensure story log window exists"""
+        if self.story_log is None or not self.story_log.winfo_exists():
+            self.story_log = StoryLogWindow(self.parent)
+            self.story_log.withdraw()
+
+    def _toggle_story_log(self):
+        """Show/Hide story log"""
+        self._ensure_story_log()
+        if self.story_log.winfo_viewable():
+            self.story_log.hide()
+        else:
+            self.story_log.show()
+
+    def _add_to_log(self, original: str, translated: str):
+        """Add text to story log"""
+        self._ensure_story_log()
+        self.story_log.add_entry(original, translated)
 
     def _open_ocr_setup(self):
         """Open OCR setup window"""
@@ -641,13 +825,24 @@ class ScreenTranslatorWindow:
                     )
                     return
 
-                translated, detected_lang = self.translation_service.translate(
-                    text, dest=self.target_lang, src=self.source_lang
-                )
+                if self.smart_mode_var.get():
+                    translated, detected_lang = (
+                        self.translation_service.translate_smart(
+                            text,
+                            dest=self.target_lang,
+                            style="volam",
+                            api_key=self.groq_api_key_var.get(),
+                        )
+                    )
+                else:
+                    translated, detected_lang = self.translation_service.translate(
+                        text, dest=self.target_lang, src=self.source_lang
+                    )
 
                 def show_result():
                     self.overlay.position_near_region(x, y, w, h)
                     self.overlay.show_text(text, translated, detected_lang)
+                    self._add_to_log(text, translated)
 
                 self.root.after(0, show_result)
 
@@ -732,9 +927,37 @@ class ScreenTranslatorWindow:
                         ):
                             self._last_text = text_clean
 
-                            translated, detected = self.translation_service.translate(
-                                text_clean, dest=self.target_lang, src=self.source_lang
-                            )
+                            self._last_text = text_clean
+
+                            # Use Smart Mode if enabled
+                            if self.smart_mode_var.get():
+                                # Get context from log (last 2 entries)
+                                context = ""
+                                if self.story_log and self.story_log.log_entries:
+                                    last_entries = self.story_log.log_entries[-2:]
+                                    context = "\n".join(
+                                        [e["translated"] for e in last_entries]
+                                    )
+
+                                translated, detected = (
+                                    self.translation_service.translate_smart(
+                                        text_clean,
+                                        context=context,
+                                        dest=self.target_lang,
+                                        style="volam",
+                                        api_key=self.groq_api_key_var.get(),
+                                    )
+                                )
+                            else:
+                                translated, detected = (
+                                    self.translation_service.translate(
+                                        text_clean,
+                                        dest=self.target_lang,
+                                        src=self.source_lang,
+                                    )
+                                )
+
+                            # Validate translation result too
 
                             # Validate translation result too
                             if translated and len(translated.strip()) >= 2:
@@ -748,6 +971,7 @@ class ScreenTranslatorWindow:
                                             text_clean, t, d
                                         ),
                                     )
+                                    self._add_to_log(text_clean, translated)
 
                 except Exception as e:
                     print(f"[ScreenTranslator] Realtime error: {e}")

@@ -390,26 +390,26 @@ class MenuLauncher:
                     }
                 )
 
-        # Macro Recorder
-        if is_visible("macro_recorder"):
-            if has_macro:
-                menu_items.append(
-                    {
-                        "label": t("macro_recorder"),
-                        "command": self.open_macro_recorder,
-                        "icon": "⏺",
-                        "fg": "#a6e3a1",
-                    }
-                )
-            else:
-                menu_items.append(
-                    {
-                        "label": t("macro_recorder"),
-                        "command": self.show_macro_restriction,
-                        "icon": "🔒",
-                        "fg": "#6c7086",
-                    }
-                )
+        # # Macro Recorder
+        # if is_visible("macro_recorder"):
+        #     if has_macro:
+        #         menu_items.append(
+        #             {
+        #                 "label": t("macro_recorder"),
+        #                 "command": self.open_macro_recorder,
+        #                 "icon": "⏺",
+        #                 "fg": "#a6e3a1",
+        #             }
+        #         )
+        #     else:
+        #         menu_items.append(
+        #             {
+        #                 "label": t("macro_recorder"),
+        #                 "command": self.show_macro_restriction,
+        #                 "icon": "🔒",
+        #                 "fg": "#6c7086",
+        #             }
+        #         )
 
         # WWM Combo (PRO feature - same as Macro)
         if is_visible("wwm_combo"):
