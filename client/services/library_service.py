@@ -29,10 +29,13 @@ class LibraryService:
         Returns:
             list: Sorted list of MIDI filenames
         """
+        print(f"[Library] Scanning for MIDI files in: {self.midi_folder}")
         midi_files = glob.glob(os.path.join(self.midi_folder, "*.mid")) + glob.glob(
             os.path.join(self.midi_folder, "*.midi")
         )
-        return sorted([os.path.basename(f) for f in midi_files])
+        found = sorted([os.path.basename(f) for f in midi_files])
+        print(f"[Library] Found {len(found)} files: {found}")
+        return found
 
     def get_midi_path(self, filename):
         """
@@ -80,4 +83,3 @@ class LibraryService:
             [c for c in filename if c.isalpha() or c.isdigit() or c in " .-_()"]
         )
         return filename.strip()
-

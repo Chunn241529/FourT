@@ -1,20 +1,21 @@
 """
-Keyboard controller for sending key presses
+Keyboard controller for sending key presses using Advanced Input Backend
 """
 
-from pynput.keyboard import Controller, Key
+from services.input_backend import get_input_backend
 
 
 class KeyboardController:
-    """Handles real keyboard input simulation"""
+    """Handles real keyboard input simulation using Win32 API"""
 
     def __init__(self):
-        self.controller = Controller()
+        # Use Win32 backend by default for better anti-cheat safety
+        self.backend = get_input_backend("win32")
 
     def press_key(self, key_char, pressed=True, modifier=None):
         """
         Press or release a key on the keyboard with optional modifier
-        
+
         Args:
             key_char: Character to press
             pressed: True to press, False to release
@@ -23,24 +24,19 @@ class KeyboardController:
         try:
             # Press modifier if needed
             if modifier and pressed:
-                if modifier == 'shift':
-                    self.controller.press(Key.shift)
-                elif modifier == 'ctrl':
-                    self.controller.press(Key.ctrl)
-            
+                # Map simple modifier strings to backend expected keys if needed
+                # Win32Backend handles "shift", "ctrl" directly
+                self.backend.press_key(modifier)
+
             # Press/release main key
             if pressed:
-                self.controller.press(key_char)
+                self.backend.press_key(key_char)
             else:
-                self.controller.release(key_char)
-                
+                self.backend.release_key(key_char)
+
             # Release modifier if it was pressed
             if modifier and pressed:
-                if modifier == 'shift':
-                    self.controller.release(Key.shift)
-                elif modifier == 'ctrl':
-                    self.controller.release(Key.ctrl)
-                    
+                self.backend.release_key(modifier)
+
         except Exception as e:
             print(f"Error pressing key {key_char} with modifier {modifier}: {e}")
-

@@ -35,7 +35,9 @@ class MenuLauncher:
 
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("")
+        from utils.stealth_utils import stealth_manager
+
+        self.root.title(stealth_manager.get_safe_window_title())
 
         # Compact mode: 50x50 square
         self.compact_size = 56  # Slightly larger for better touch/click
@@ -413,7 +415,8 @@ class MenuLauncher:
 
         # WWM Combo (PRO feature - same as Macro)
         if is_visible("wwm_combo"):
-            if has_macro:
+            # Fix: Check WWM_COMBO feature directly, not generic MACRO
+            if self.feature_manager.has_feature(Features.WWM_COMBO):
                 menu_items.append(
                     {
                         "label": t("macro_combo"),

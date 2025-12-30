@@ -754,27 +754,38 @@ class PackagesTab(BaseTab):
         item = self.packages_listbox.get(selection[0])
         pkg_id = item.split(":")[0]
 
-        if pkg_id in ["free", "basic", "plus", "pro", "premium"]:
-            messagebox.showerror("Lỗi", "Không thể xóa gói mặc định")
-            return
+        # Allow deletion of default packages (soft delete on server)
+        # if pkg_id in ["free", "basic", "plus", "pro", "premium"]:
+        #    messagebox.showerror("Lỗi", "Không thể xóa gói mặc định")
+        #    return
 
         if not messagebox.askyesno("Xác nhận", f"Xóa gói {pkg_id}?"):
             return
 
+        # Optimistically assume success? No, better to wait for server confirmation to avoid sync issues.
         try:
             import requests
 
             admin_api_url = "http://localhost:8000"
             url = f"{admin_api_url}/features/admin/packages/{pkg_id}"
             response = requests.delete(url, timeout=5)
+
             if response.status_code == 200:
                 messagebox.showinfo("Thành công", f"Đã xóa gói {pkg_id}")
-        except:
-            pass
+                # Only remove from local data if server delete was successful
+                if pkg_id in self.packages_data:
+                    del self.packages_data[pkg_id]
+                self._load_packages()
+            else:
+                # Attempt to get error detail
+                try:
+                    detail = response.json().get("detail", response.text)
+                except:
+                    detail = response.text
+                messagebox.showerror("Lỗi", f"Không thể xóa gói: {detail}")
 
-        if pkg_id in self.packages_data:
-            del self.packages_data[pkg_id]
-        self._load_packages()
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Lỗi kết nối: {e}")
 
     def _move_package_up(self):
         """Move selected package up in the list"""

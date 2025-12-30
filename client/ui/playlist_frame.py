@@ -569,87 +569,9 @@ class PlaylistFrame(tk.Frame):
             menu.grab_release()
 
     def _add_from_library(self):
-        """Modern library selection dialog"""
-        dialog = tk.Toplevel(self)
-        dialog.title("Chọn từ thư viện")
-        dialog.geometry("320x450")
-        dialog.configure(bg=colors["bg"])
-        dialog.transient(self)
-        dialog.grab_set()
+        from .midi_library_window import MidiLibraryWindow
 
-        # Set icon
-        from .theme import set_window_icon
-
-        set_window_icon(dialog)
-
-        # Center
-        dialog.update_idletasks()
-        x = (dialog.winfo_screenwidth() - 320) // 2
-        y = (dialog.winfo_screenheight() - 450) // 2
-        dialog.geometry(f"+{x}+{y}")
-
-        # Header
-        header = tk.Frame(dialog, bg=colors["bg"])
-        header.pack(fill="x", padx=15, pady=15)
-
-        tk.Label(
-            header,
-            text="📂 Chọn bài hát",
-            font=("Segoe UI", 14, "bold"),
-            bg=colors["bg"],
-            fg=colors["fg"],
-        ).pack(side="left")
-
-        # List
-        list_frame = tk.Frame(dialog, bg=colors["card"])
-        list_frame.pack(fill="both", expand=True, padx=15, pady=5)
-
-        listbox = tk.Listbox(
-            list_frame,
-            selectmode="extended",
-            bg=colors["card"],
-            fg=colors["fg"],
-            font=("Segoe UI", 10),
-            selectbackground=colors["accent"],
-            selectforeground="white",
-            highlightthickness=0,
-            bd=0,
-            activestyle="none",
-        )
-
-        scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=listbox.yview)
-        listbox.configure(yscrollcommand=scrollbar.set)
-
-        scrollbar.pack(side="right", fill="y")
-        listbox.pack(side="left", fill="both", expand=True, padx=5, pady=5)
-
-        for midi in self.library_service.get_local_midi_files():
-            listbox.insert(tk.END, midi)
-
-        # Buttons
-        btn_frame = tk.Frame(dialog, bg=colors["bg"])
-        btn_frame.pack(fill="x", padx=15, pady=15)
-
-        def add_selected():
-            selections = listbox.curselection()
-            count = 0
-            for idx in selections:
-                filename = listbox.get(idx)
-                path = self.library_service.get_midi_path(filename)
-                self.playlist.add_song(path, filename)
-                count += 1
-            dialog.destroy()
-
-        ModernButton(
-            btn_frame, text="Thêm", command=add_selected, kind="accent", width=10
-        ).pack(side="left")
-
-        ModernButton(
-            btn_frame, text="Hủy", command=dialog.destroy, kind="secondary", width=8
-        ).pack(side="right")
-
-        # Fade in
-        FadeEffect.fade_in(dialog, duration=150)
+        MidiLibraryWindow(self, self.library_service, self.playlist)
 
     def _add_from_file(self):
         from tkinter import filedialog

@@ -2,21 +2,19 @@
   "plus": {
     "name": "Plus",
     "description": "Gói nâng cao",
-    "price": 35000,
+    "price": 20000,
     "duration_days": 30,
     "order": 2,
     "features": [
       "midi_playback",
       "loop_mode",
       "script_preview",
-      "quest_video_helper",
-      "ping_optimizer"
+      "mp3_conversion"
     ],
     "feature_display": [
-      "Tất cả tính năng Basic",
-      "Chỉnh sửa kịch bản MIDI",
-      "Quest helper",
-      "Ping optimize"
+      "Midi playback",
+      "Mp3 to midi",
+      "Loop mode"
     ],
     "limits": {
       "midi_file_limit": 999,
@@ -36,16 +34,11 @@
       "loop_mode",
       "script_preview",
       "mp3_conversion",
-      "macro",
-      "quest_video_helper",
-      "ping_optimizer",
-      "screen_translator"
+      "ping_optimizer"
     ],
     "feature_display": [
-      "Tất cả tính năng Plus",
-      "Macro cơ bản",
-      "Chuyển đổi MP3 sang MIDI",
-      "Dịch màn hình"
+      "All Plus",
+      "Ping optimizer"
     ],
     "limits": {
       "midi_file_limit": 999,
@@ -66,7 +59,6 @@
       "loop_mode",
       "script_preview",
       "mp3_conversion",
-      "macro",
       "macro_unlimited",
       "wwm_combo",
       "quest_video_helper",
@@ -75,8 +67,8 @@
     ],
     "feature_display": [
       "Tất cả tính năng Pro",
-      "Macro combo",
-      "Không giới hạn tính năng"
+      "Quest video helper",
+      "Screen translator AI"
     ],
     "limits": {
       "midi_file_limit": 999,
@@ -87,24 +79,7 @@
     "recommended": false
   },
   "basic": {
-    "name": "Basic",
-    "description": "Gói cơ bản",
-    "price": 20000,
-    "duration_days": 30,
-    "order": 1,
-    "features": [
-      "midi_playback",
-      "loop_mode"
-    ],
-    "feature_display": [
-      "Phát nhạc MIDI tự động",
-      "Chế độ lặp lại"
-    ],
-    "limits": {
-      "midi_file_limit": 999
-    },
-    "color": "#3498db",
-    "recommended": false
+    "_deleted": true
   },
   "trial": {
     "name": "Trial",
@@ -113,19 +88,12 @@
     "duration_days": 1,
     "order": -1,
     "features": [
-      "midi_playback",
-      "loop_mode",
-      "script_preview",
-      "mp3_conversion",
-      "macro",
-      "macro_unlimited",
-      "wwm_combo",
       "quest_video_helper",
       "ping_optimizer",
       "screen_translator"
     ],
     "feature_display": [
-      "Dùng thử 30 phút",
+      "Dùng thử 1 ngày",
       "Tất cả tính năng Premium"
     ],
     "limits": {

@@ -85,11 +85,9 @@ def _load_saved_packages() -> Dict[str, Dict[str, Any]]:
 def _save_packages(packages: Dict[str, Dict[str, Any]]):
     """Save packages to JSON file"""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    try:
-        with open(PACKAGES_FILE, "w", encoding="utf-8") as f:
-            json.dump(packages, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"[Features] Error saving packages: {e}")
+    # Allow exception to propagate so caller knows if save failed
+    with open(PACKAGES_FILE, "w", encoding="utf-8") as f:
+        json.dump(packages, f, ensure_ascii=False, indent=2)
 
 
 def _get_all_packages() -> Dict[str, Dict[str, Any]]:
@@ -97,7 +95,9 @@ def _get_all_packages() -> Dict[str, Dict[str, Any]]:
     result = dict(DEFAULT_PACKAGE_DEFINITIONS)
     saved = _load_saved_packages()
     result.update(saved)
-    return result
+
+    # Filter out soft-deleted packages
+    return {k: v for k, v in result.items() if not v.get("_deleted", False)}
 
 
 @router.get("/check/{package}", response_model=FeatureResponse)
@@ -171,7 +171,10 @@ async def admin_create_or_update_package(package_id: str, data: PackageUpdate):
     }
 
     # Persist to file
-    _save_packages(saved_packages)
+    try:
+        _save_packages(saved_packages)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save package: {str(e)}")
 
     return {
         "success": True,
@@ -182,19 +185,39 @@ async def admin_create_or_update_package(package_id: str, data: PackageUpdate):
 
 @router.delete("/admin/packages/{package_id}")
 async def admin_delete_package(package_id: str):
-    """Admin: Delete a saved package (cannot delete defaults)"""
+    """Admin: Delete a saved package (soft delete for defaults)"""
     package_id = package_id.lower()
 
     saved_packages = _load_saved_packages()
 
+    # Case 1: Package is a default package -> Soft delete (hide it)
+    if package_id in DEFAULT_PACKAGE_DEFINITIONS:
+        saved_packages[package_id] = {"_deleted": True}
+        try:
+            _save_packages(saved_packages)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to delete package: {str(e)}"
+            )
+        return {
+            "success": True,
+            "message": f"Package {package_id} hidden (soft deleted)",
+        }
+
+    # Case 2: Package is NOT default but exists in saved -> Hard delete
     if package_id in saved_packages:
         del saved_packages[package_id]
-        _save_packages(saved_packages)
+
+        try:
+            _save_packages(saved_packages)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to delete package: {str(e)}"
+            )
+
         return {"success": True, "message": f"Package {package_id} deleted"}
 
-    if package_id in DEFAULT_PACKAGE_DEFINITIONS:
-        raise HTTPException(status_code=400, detail="Cannot delete default package")
-
+    # Case 3: Package not found anywhere
     raise HTTPException(status_code=404, detail="Package not found")
 
 

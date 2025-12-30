@@ -118,7 +118,9 @@ class SplashScreen:
         self.root.withdraw()  # Hide initially
 
         # Window setup
-        self.root.title("FourT")
+        from utils.stealth_utils import stealth_manager
+
+        self.root.title(stealth_manager.get_safe_window_title())
         self.root.overrideredirect(True)
         self.root.attributes("-transparentcolor", "#000001")
         self.root.attributes("-topmost", True)

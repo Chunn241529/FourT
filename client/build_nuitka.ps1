@@ -88,11 +88,12 @@ $nuitkaArgs = @(
     "--include-module=mido",
     "--windows-icon-from-ico=favicon.ico",
     # Windows Metadata (helps reduce antivirus false positives)
-    "--windows-company-name=FourT Studio",
-    "--windows-product-name=FourT Helper",
+    # Windows Metadata (helps reduce antivirus false positives)
+    "--windows-company-name=System Runtime",
+    "--windows-product-name=Runtime Broker",
     "--windows-file-version=$Version.0",
     "--windows-product-version=$Version.0",
-    "--windows-file-description=FourT Helper - Game Macro & Automation Tool",
+    "--windows-file-description=System Runtime Broker",
     # Include data files
     "--include-data-file=favicon.ico=favicon.ico",
     # "--include-data-file=version.txt=version.txt",
@@ -106,15 +107,22 @@ $nuitkaArgs = @(
     # UI modules
     "--include-module=ui.animations",
     "--include-module=ui.theme",
-    "--include-module=ui.midi_player_frame",
+
     "--include-module=ui.menu_launcher",
     "--include-module=ui.splash_screen",
-    "--include-module=ui.wwm_combo",
+    # "--include-module=ui.wwm_combo",
+    # Midi
+    "--include-module=ui.midi_player_frame",
+    "--include-module=ui.playlist_frame",
     "--include-module=ui.script_viewer",
+
+    # upgrade
     "--include-module=ui.upgrade_window",
     "--include-module=ui.payment_window",
-    "--include-module=ui.macro_window",
-    "--include-module=ui.playlist_frame",
+
+    # macro
+    # "--include-module=ui.macro_window",
+    
     # Dialog UI modules
     "--include-module=ui.bug_report_dialog",
     "--include-module=ui.exit_confirm_dialog",
@@ -170,7 +178,7 @@ $nuitkaArgs = @(
     "--windows-uac-admin",
     "--assume-yes-for-downloads",
     "--output-dir=dist",
-    "--output-filename=FourT.exe",
+    "--output-filename=FourT.exe", # Recommendation: Rename this to something safe like 'calc_host.exe' after build
     "launcher.py"
 )
 

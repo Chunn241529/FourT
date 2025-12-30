@@ -11,7 +11,11 @@ from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from typing import List, Dict, Any, Optional, Callable
 from PIL import Image, ImageTk
+from typing import List, Dict, Any, Optional, Callable
+from PIL import Image, ImageTk
 from pynput import keyboard, mouse
+from services.input_humanizer import humanizer
+from services.input_backend import get_input_backend
 
 
 class SkillLoader:
@@ -369,6 +373,10 @@ class ComboPlayer:
     """Handles combo playback with keyboard and mouse simulation"""
 
     def __init__(self):
+        # Use Win32 backend by default for better anti-cheat safety
+        self.input_backend = get_input_backend("win32")
+        # Keep pynput controllers only for listeners/utility if needed,
+        # but for playback we use backend
         self.keyboard_controller = keyboard.Controller()
         self.mouse_controller = mouse.Controller()
         self.running = False
@@ -412,7 +420,9 @@ class ComboPlayer:
                     break
 
                 if item["type"] == "delay":
-                    time.sleep(item["value"])
+                    # Apply jitter to delay
+                    sleep_time = humanizer.apply_jitter(item["value"])
+                    time.sleep(sleep_time)
                 elif item["type"] == "skill":
                     hold_duration = item.get(
                         "hold", 0.05
@@ -432,11 +442,10 @@ class ComboPlayer:
 
                 elif item["type"] == "macro_key":
                     # Execute recorded keyboard event
-                    key = self._parse_key(item["key"])
                     if item["action"] == "press":
-                        self.keyboard_controller.press(key)
+                        self.input_backend.press_key(item["key"])
                     else:
-                        self.keyboard_controller.release(key)
+                        self.input_backend.release_key(item["key"])
 
                 elif item["type"] == "macro_mouse":
                     # Execute recorded mouse event
@@ -455,9 +464,9 @@ class ComboPlayer:
                         button = mouse.Button.left
 
                     if item["action"] == "press":
-                        self.mouse_controller.press(button)
+                        self.input_backend.click_mouse(button_str, down=True, up=False)
                     else:
-                        self.mouse_controller.release(button)
+                        self.input_backend.click_mouse(button_str, down=False, up=True)
 
             iterations += 1
             if loop_count == 0:
@@ -476,56 +485,79 @@ class ComboPlayer:
         # Handle mouse scroll actions
         key_lower = key_str.lower()
         if key_lower == "scroll_down":
-            self.mouse_controller.scroll(0, -1)  # Scroll down
-            time.sleep(hold_duration if hold_duration > 0 else 0.05)
+            self.input_backend.scroll(0, -1)  # Scroll down
+            real_hold = humanizer.get_click_delay(
+                target_ms=(hold_duration if hold_duration > 0 else 0.05) * 1000
+            )
+            time.sleep(real_hold)
             return
         elif key_lower == "scroll_up":
-            self.mouse_controller.scroll(0, 1)  # Scroll up
-            time.sleep(hold_duration if hold_duration > 0 else 0.05)
+            self.input_backend.scroll(0, 1)  # Scroll up
+            real_hold = humanizer.get_click_delay(
+                target_ms=(hold_duration if hold_duration > 0 else 0.05) * 1000
+            )
+            time.sleep(real_hold)
             return
-        elif key_lower in ("lmb", "left_click", "mouse1"):
-            self.mouse_controller.press(mouse.Button.left)
-            time.sleep(hold_duration if hold_duration > 0 else 0.05)
-            self.mouse_controller.release(mouse.Button.left)
+        elif key_lower in ("lmb", "left_click", "mouse1", "left"):
+            self.input_backend.click_mouse("left", down=True, up=False)
+            real_hold = humanizer.get_click_delay(
+                target_ms=(hold_duration if hold_duration > 0 else 0.05) * 1000
+            )
+            time.sleep(real_hold)
+            self.input_backend.click_mouse("left", down=False, up=True)
             return
-        elif key_lower in ("rmb", "right_click", "mouse2"):
-            self.mouse_controller.press(mouse.Button.right)
-            time.sleep(hold_duration if hold_duration > 0 else 0.05)
-            self.mouse_controller.release(mouse.Button.right)
+        elif key_lower in ("rmb", "right_click", "mouse2", "right"):
+            self.input_backend.click_mouse("right", down=True, up=False)
+            real_hold = humanizer.get_click_delay(
+                target_ms=(hold_duration if hold_duration > 0 else 0.05) * 1000
+            )
+            time.sleep(real_hold)
+            self.input_backend.click_mouse("right", down=False, up=True)
             return
-        elif key_lower in ("mmb", "middle_click", "mouse3"):
-            self.mouse_controller.press(mouse.Button.middle)
-            time.sleep(hold_duration if hold_duration > 0 else 0.05)
-            self.mouse_controller.release(mouse.Button.middle)
+        elif key_lower in ("mmb", "middle_click", "mouse3", "middle"):
+            self.input_backend.click_mouse("middle", down=True, up=False)
+            real_hold = humanizer.get_click_delay(
+                target_ms=(hold_duration if hold_duration > 0 else 0.05) * 1000
+            )
+            time.sleep(real_hold)
+            self.input_backend.click_mouse("middle", down=False, up=True)
             return
         elif key_lower in ("mouse4", "x1", "back"):
-            self.mouse_controller.press(mouse.Button.x1)
-            time.sleep(hold_duration if hold_duration > 0 else 0.05)
-            self.mouse_controller.release(mouse.Button.x1)
+            self.input_backend.click_mouse("x1", down=True, up=False)
+            real_hold = humanizer.get_click_delay(
+                target_ms=(hold_duration if hold_duration > 0 else 0.05) * 1000
+            )
+            time.sleep(real_hold)
+            self.input_backend.click_mouse("x1", down=False, up=True)
             return
         elif key_lower in ("mouse5", "x2", "forward"):
-            self.mouse_controller.press(mouse.Button.x2)
-            time.sleep(hold_duration if hold_duration > 0 else 0.05)
-            self.mouse_controller.release(mouse.Button.x2)
+            self.input_backend.click_mouse("x2", down=True, up=False)
+            real_hold = humanizer.get_click_delay(
+                target_ms=(hold_duration if hold_duration > 0 else 0.05) * 1000
+            )
+            time.sleep(real_hold)
+            self.input_backend.click_mouse("x2", down=False, up=True)
             return
 
         # Handle keyboard keys
         # Press modifiers first
         if modifiers:
             for mod in modifiers:
-                mod_key = self._parse_key(mod)
-                self.keyboard_controller.press(mod_key)
+                self.input_backend.press_key(mod)
 
-        key = self._parse_key(key_str)
-        self.keyboard_controller.press(key)
-        time.sleep(hold_duration if hold_duration > 0 else 0.05)
-        self.keyboard_controller.release(key)
+        self.input_backend.press_key(key_str)
+
+        real_hold = humanizer.get_click_delay(
+            target_ms=(hold_duration if hold_duration > 0 else 0.05) * 1000
+        )
+        time.sleep(real_hold)
+
+        self.input_backend.release_key(key_str)
 
         # Release modifiers after
         if modifiers:
             for mod in reversed(modifiers):
-                mod_key = self._parse_key(mod)
-                self.keyboard_controller.release(mod_key)
+                self.input_backend.release_key(mod)
 
     def _parse_key(self, key_str: str):
         """Parse key string to pynput key"""
