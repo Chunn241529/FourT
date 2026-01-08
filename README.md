@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.4.4-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.0.7-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/platform-Windows-lightgrey.svg" alt="Platform">
   <img src="https://img.shields.io/badge/python-3.8+-green.svg" alt="Python">
 </p>
@@ -72,7 +72,7 @@
 - **Frontend**: CustomTkinter (Python GUI)
 - **Backend**: FastAPI
 - **Tunnel**: Cloudflare Tunnel / Ngrok
-- **Build**: PyInstaller + Inno Setup
+- **Build**: Nuitka + Inno Setup
 
 ## 📄 License
 
