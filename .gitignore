@@ -11,17 +11,30 @@
 .env.*
 !.env.example
 
-# # Server sensitive files
-# server/.env
-# server/server_config.json
-# server/data/*.db
-# server/data/*.sqlite
-# server/cloudflare/
+# Server sensitive files
+server/.env
+server/server_config.json
+server/data/*.db
+server/data/*.sqlite
+server/cloudflare/
 
-# server/
+server/
+
+build/
+dist/
+
+build_nuitka.sh
+build_nuitka.bat
+update_info.json
 
 
+wwm_resources
+wwm_combos
 
+ui\old
+data
+temp
+releases
 
 # Root level sensitive files
 # patch_main.py
