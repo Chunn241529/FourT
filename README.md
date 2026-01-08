@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://fourt.io.vn">Website</a> •
-  <a href="https://fourt.io.vn/download/installer">Installation</a> •
+  <a href="https://fourt.io.vn/download/installer">Installation</a>
 </p>
 
 <p align="center">
