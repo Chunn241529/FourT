@@ -5,7 +5,7 @@
 <h1 align="center">FourT Helper</h1>
 
 <p align="center">
-  <strong>🎮 Công cụ hỗ trợ chơi game Where Winds Meet</strong>
+  <strong>🎮 Công cụ hỗ trợ chơi game</strong>
 </p>
 
 <p align="center">
