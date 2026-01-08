@@ -9,11 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#disclaimer">Disclaimer</a> •
-  <a href="#license">License</a>
+  <a href="https://fourt.io.vn">Website</a> •
+  <a href="https://fourt.io.vn/download/installer">Installation</a> •
 </p>
 
 <p align="center">
