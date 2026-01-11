@@ -460,6 +460,18 @@ class MidiPlayerFrame(tk.Frame):
         )
         self.humanize_btn.pack(side="left", padx=2)
 
+        # Guide Mode Toggle (Falling notes overlay)
+        self.guide_enabled = False
+        self.guide_btn = ToggleButton(
+            mode_frame,
+            "📖",
+            command=self._toggle_guide_mode,
+            active=False,
+            width=42,
+            height=36,
+        )
+        self.guide_btn.pack(side="left", padx=2)
+
         # ===== STATUS =====
         status_frame = tk.Frame(self, bg=colors["bg"])
         status_frame.pack(fill="x", padx=15)
@@ -647,6 +659,74 @@ class MidiPlayerFrame(tk.Frame):
             self.status_label.config(
                 text="Đã bật Humanize (An toàn)", fg=colors["success"]
             )
+
+    def _toggle_guide_mode(self):
+        """Toggle Guide Mode overlay"""
+        self.guide_enabled = not self.guide_enabled
+        self.guide_btn.set_active(self.guide_enabled)
+
+        if self.guide_enabled:
+            # Show the overlay
+            from .guide_overlay import show_guide_overlay
+
+            # Prepare notes for visualization if we have a current song
+            current = self.playlist.get_current_song()
+            if current:
+                notes = self._get_guide_notes(current.get("path"))
+                overlay = show_guide_overlay(notes)
+                self.status_label.config(text="Guide Mode đã bật", fg=colors["accent"])
+            else:
+                show_guide_overlay([])
+                self.status_label.config(
+                    text="Guide Mode - Chọn bài để hiển thị", fg=colors["warning"]
+                )
+        else:
+            # Hide the overlay
+            from .guide_overlay import hide_guide_overlay
+
+            hide_guide_overlay()
+            self.status_label.config(text="Guide Mode đã tắt", fg=colors["fg_dim"])
+
+    def _get_guide_notes(self, midi_path: str):
+        """
+        Preprocess MIDI and convert to guide overlay format.
+        Returns list of notes with: key, modifier, start_time, end_time, hand
+        """
+        if not midi_path or not os.path.exists(midi_path):
+            return []
+
+        try:
+            events, duration, debug_info = preprocess_midi(midi_path)
+
+            # Convert events to notes format
+            # Events are: (time, action, key_char, modifier, hand)
+            notes = []
+            pending = {}  # key -> (start_time, modifier, hand)
+
+            for event in events:
+                time, action, key_char, modifier, hand = event
+                key = f"{key_char}_{modifier}_{hand}"
+
+                if action == "press":
+                    pending[key] = (time, modifier, hand, key_char)
+                elif action == "release" and key in pending:
+                    start_time, mod, h, kc = pending.pop(key)
+                    notes.append(
+                        {
+                            "key": kc,
+                            "modifier": mod,
+                            "start_time": start_time,
+                            "end_time": time,
+                            "hand": h,
+                        }
+                    )
+
+            print(f"[GuideMode] Prepared {len(notes)} notes for visualization")
+            return notes
+
+        except Exception as e:
+            print(f"[GuideMode] Error preparing notes: {e}")
+            return []
 
     def _update_playback_state(self):
         """Update UI based on playback state"""
