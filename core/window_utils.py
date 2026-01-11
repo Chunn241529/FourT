@@ -75,6 +75,7 @@ def focus_game_window() -> bool:
         "Nghịch Thủy Hàn",
         "Justice Online",
         "wwm.exe",
+        "yysl",
         "WWM",
         "GameClient",
     ]
